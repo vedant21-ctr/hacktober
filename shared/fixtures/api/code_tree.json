@@ -1,0 +1,14 @@
+{
+  "nodes": [
+    {
+      "path": "Lib/cgi.py",
+      "currentPath": null,
+      "decisionCount": 4
+    },
+    {
+      "path": "Lib/asyncio/base_events.py",
+      "currentPath": "Lib/asyncio/base_events.py",
+      "decisionCount": 3
+    }
+  ]
+}

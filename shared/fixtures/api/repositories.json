@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "fullName": "python/cpython",
+      "defaultBranch": "main",
+      "headCommitSha": "d985a1a1f09e863fa6754098939e1a179669528f",
+      "clonePath": "/var/data/repos/python-cpython",
+      "importedAt": "2026-10-31T18:00:00.000Z"
+    }
+  ]
+}

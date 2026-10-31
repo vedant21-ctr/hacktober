@@ -1,0 +1,61 @@
+{
+  "id": 1,
+  "input": {
+    "type": "idea",
+    "summary": "Re-add cgi module to standard library for lightweight scripts"
+  },
+  "concepts": ["cgi", "multipart", "standard library", "deprecation"],
+  "changedPaths": ["Lib/cgi.py"],
+  "items": [
+    {
+      "decision": {
+        "id": 12,
+        "title": "Remove CGI and related dead-battery modules (PEP 594)",
+        "status": "accepted",
+        "lifecycle": "active",
+        "summary": "Deprecate and remove cgi and other unmaintained standard library modules following PEP 594.",
+        "confidence": 0.94,
+        "sourceUrl": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932",
+        "sourceTitle": "PEP 594: Removing dead batteries from the standard library",
+        "verifiedRatio": 0.92
+      },
+      "relation": "conflicts",
+      "reason": "Direct conflict with accepted PEP 594 decision removing the unmaintained CGI module.",
+      "evidence": [
+        {
+          "id": 501,
+          "quote": "The cgi module has security liabilities and modern web frameworks have replaced it.",
+          "claimType": "rejection_reason",
+          "verified": true,
+          "method": "normalized_exact",
+          "score": 1.0,
+          "author": "brettcannon",
+          "role": "owner",
+          "at": "2019-05-20T14:32:00.000Z",
+          "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/4"
+        }
+      ],
+      "rejectedBecause": "Security liabilities and availability of modern external alternatives.",
+      "conditions": [
+        {
+          "id": 201,
+          "text": "Requires modern multipart parsing outside the standard library",
+          "kind": "dependency",
+          "probe": "none",
+          "probeValue": null,
+          "health": {
+            "state": "holds",
+            "signalType": "external_ecosystem",
+            "signalPath": "pyproject.toml",
+            "signalValue": "multipart>=0.0.5",
+            "details": "Modern alternative multipart parser package widely available on PyPI",
+            "interpretation": "Constraint holds; ecosystem has transitioned to external packages.",
+            "checkedAt": "2026-10-31T21:00:00.000Z"
+          }
+        }
+      ],
+      "reconsiderIf": "External multipart parsing packages are no longer maintained or standard library maintenance model changes."
+    }
+  ],
+  "note": "Decision support analysis based on historical repository decisions and verified evidence."
+}

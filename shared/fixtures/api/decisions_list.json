@@ -1,0 +1,27 @@
+{
+  "items": [
+    {
+      "id": 12,
+      "title": "Remove CGI and related dead-battery modules (PEP 594)",
+      "status": "accepted",
+      "lifecycle": "active",
+      "summary": "Deprecate and remove cgi and other unmaintained standard library modules following PEP 594.",
+      "confidence": 0.94,
+      "sourceUrl": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932",
+      "sourceTitle": "PEP 594: Removing dead batteries from the standard library",
+      "verifiedRatio": 0.92
+    },
+    {
+      "id": 15,
+      "title": "Keep parser module in Python 3.10",
+      "status": "rejected",
+      "lifecycle": "active",
+      "summary": "Proposal to retain the parser module despite the new PEG parser introduction.",
+      "confidence": 0.88,
+      "sourceUrl": "https://discuss.python.org/t/pep-617-new-peg-parser-for-cpython/4155",
+      "sourceTitle": "PEP 617: New PEG parser for CPython",
+      "verifiedRatio": 0.85
+    }
+  ],
+  "total": 2
+}

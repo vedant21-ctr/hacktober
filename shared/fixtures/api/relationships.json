@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "type": "supersedes",
+      "otherDecision": {
+        "id": 8,
+        "title": "Maintain legacy CGI module in stdlib",
+        "status": "accepted",
+        "lifecycle": "superseded",
+        "summary": "Original decision to keep CGI in stdlib for legacy script compatibility.",
+        "confidence": 0.85,
+        "sourceUrl": "https://bugs.python.org/issue1234",
+        "sourceTitle": "Issue 1234: CGI support status",
+        "verifiedRatio": 0.8
+      },
+      "evidence": {
+        "id": 502,
+        "quote": "We have accepted PEP 594 and will proceed with deprecation in 3.11 and removal in 3.13.",
+        "claimType": "decision_statement",
+        "verified": true,
+        "method": "normalized_exact",
+        "score": 1.0,
+        "author": "steering-council",
+        "role": "owner",
+        "at": "2021-03-12T16:00:00.000Z",
+        "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/25"
+      }
+    }
+  ]
+}

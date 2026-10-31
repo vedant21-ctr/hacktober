@@ -1,0 +1,26 @@
+{
+  "path": "Lib/cgi.py",
+  "currentPath": null,
+  "decisions": [
+    {
+      "id": 12,
+      "title": "Remove CGI and related dead-battery modules (PEP 594)",
+      "status": "accepted",
+      "lifecycle": "active",
+      "summary": "Deprecate and remove cgi and other unmaintained standard library modules following PEP 594.",
+      "confidence": 0.94,
+      "sourceUrl": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932",
+      "sourceTitle": "PEP 594: Removing dead batteries from the standard library",
+      "verifiedRatio": 0.92
+    }
+  ],
+  "links": [
+    {
+      "path": "Lib/cgi.py",
+      "currentPath": null,
+      "linkKind": "mentioned",
+      "basis": "Explicit file mention in deprecation discussion quote",
+      "commitSha": "b3e218204b73cb439bb7bb6293910c6abfbff191"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "id": 2,
+  "caseId": 1,
+  "runId": 10,
+  "predictedCount": 18,
+  "matchedCount": 15,
+  "goldCount": 19,
+  "precision": 0.833,
+  "recall": 0.789,
+  "f1": 0.81,
+  "reasonAccuracy": 0.9,
+  "reviewStatus": "human_confirmed",
+  "createdAt": "2026-10-31T22:00:00.000Z",
+  "gold": [
+    {
+      "id": 1,
+      "idx": 0,
+      "name": "Keep parser module",
+      "description": "Retain parser module in stdlib",
+      "reason": "Replaced by new PEG parser implementation in PEP 617"
+    }
+  ],
+  "predictions": [
+    {
+      "alternativeId": 101,
+      "name": "Keep parser module in Python 3.10",
+      "description": "Keep parser module despite new PEG parser",
+      "reason": "Superseded by PEG parser"
+    }
+  ],
+  "matches": [
+    {
+      "id": 1,
+      "goldId": 1,
+      "alternativeId": 101,
+      "suggestedBy": "lexical",
+      "lexicalScore": 0.91,
+      "confirmed": true,
+      "reasonGrade": 1.0
+    }
+  ],
+  "misses": [
+    {
+      "goldId": 2,
+      "goldName": "Retain audioop module indefinitely",
+      "closestPrediction": "Retain audioop for backward compatibility"
+    }
+  ]
+}

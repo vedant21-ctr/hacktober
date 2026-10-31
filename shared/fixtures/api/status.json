@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "db": true,
+  "ollama": {
+    "reachable": true,
+    "model": "gemma4:e4b",
+    "mode": "live",
+    "tokensPerSecLast": 32.5
+  }
+}

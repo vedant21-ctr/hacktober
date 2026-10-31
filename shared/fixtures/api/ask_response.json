@@ -1,0 +1,21 @@
+{
+  "answer": "The cgi module was removed because it suffered from security vulnerabilities and had been replaced by modern WSGI/ASGI multipart parsers in the wider Python ecosystem.",
+  "insufficientEvidence": false,
+  "citations": [
+    {
+      "decisionId": 12,
+      "evidence": {
+        "id": 501,
+        "quote": "The cgi module has security liabilities and modern web frameworks have replaced it.",
+        "claimType": "rejection_reason",
+        "verified": true,
+        "method": "normalized_exact",
+        "score": 1.0,
+        "author": "brettcannon",
+        "role": "owner",
+        "at": "2019-05-20T14:32:00.000Z",
+        "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/4"
+      }
+    }
+  ]
+}
