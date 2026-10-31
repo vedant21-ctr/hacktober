@@ -18,8 +18,9 @@
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.8.7",
     "@types/supertest": "^6.0.2",
-    "@vitest/coverage-v8": "^2.1.4",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "^4.1.12",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.4"
+    "vitest": "^4.1.12"
   }
 }

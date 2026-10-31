@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database as DatabaseType } from 'better-sqlite3';
 import { closeDatabase, getDatabase, getSchemaSql, initDatabase } from '@decisionvault/server/db';
@@ -208,8 +211,22 @@ describe('Database Schema & Integrity', () => {
   });
 
   it('handles database initialization errors gracefully for invalid paths', () => {
-    // A path pointing to a non-existent drive or invalid filesystem root should throw
-    expect(() => initDatabase('Z:/non_existent_drive_12345/sub/db.sqlite')).toThrow();
+    // Creating a regular file and attempting to use a child path beneath it
+    // as the SQLite database location reliably fails (ENOTDIR) across both Windows and Linux
+    const tempFilePath = path.join(
+      os.tmpdir(),
+      'decisionvault-test-invalid-db-' + Date.now() + '.tmp',
+    );
+    fs.writeFileSync(tempFilePath, 'placeholder');
+
+    try {
+      const invalidChildPath = path.join(tempFilePath, 'sub', 'db.sqlite');
+      expect(() => initDatabase(invalidChildPath)).toThrow();
+    } finally {
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    }
   });
 
   it('exposes getSchemaSql and getDatabase helper functions', () => {
