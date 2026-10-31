@@ -1,4 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Database as DatabaseType } from 'better-sqlite3';
 import { closeDatabase, getDatabase, getSchemaSql, initDatabase } from '@decisionvault/server/db';
 
@@ -208,11 +211,41 @@ describe('Database Schema & Integrity', () => {
   });
 
   it('handles database initialization errors gracefully for invalid paths', () => {
-    // A path pointing to a non-existent drive or invalid filesystem root should throw
-    expect(() => initDatabase('Z:/non_existent_drive_12345/sub/db.sqlite')).toThrow();
+    // Securely create a unique temporary directory to prevent insecure temp file creation (CodeQL)
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dv-test-'));
+    const tempFilePath = path.join(tempDir, 'regular-file.tmp');
+    fs.writeFileSync(tempFilePath, 'placeholder');
+
+    try {
+      // Attempting to create a database at a subpath beneath a regular file
+      // reliably fails with ENOTDIR across both Windows and Linux
+      const invalidChildPath = path.join(tempFilePath, 'sub', 'db.sqlite');
+      expect(() => initDatabase(invalidChildPath)).toThrow();
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
-  it('exposes getSchemaSql and getDatabase helper functions', () => {
+  it('supports initialization via DB_PATH environment variable and handles existing directories', () => {
+    process.env.DB_PATH = ':memory:';
+    const envDb = initDatabase();
+    expect(envDb).toBeDefined();
+    closeDatabase();
+    delete process.env.DB_PATH;
+
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dv-db-test-'));
+    const testDbPath = path.join(tempDir, 'test.db');
+    const diskDb1 = initDatabase(testDbPath);
+    expect(diskDb1).toBeDefined();
+    closeDatabase();
+
+    const diskDb2 = initDatabase(testDbPath);
+    expect(diskDb2).toBeDefined();
+    closeDatabase();
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it('exposes getSchemaSql and getDatabase helper functions and caches global instance', () => {
     const sql = getSchemaSql();
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS');
 
@@ -221,5 +254,11 @@ describe('Database Schema & Integrity', () => {
     expect(defaultDb).toBeDefined();
     const testRow = defaultDb.prepare('SELECT 1 as val').get() as { val: number };
     expect(testRow.val).toBe(1);
+
+    const cachedDb = getDatabase();
+    expect(cachedDb).toBe(defaultDb);
+
+    closeDatabase();
+    expect(() => closeDatabase()).not.toThrow();
   });
 });

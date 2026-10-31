@@ -9,19 +9,12 @@ const __dirname = path.dirname(__filename);
 let globalDb: DatabaseType | null = null;
 
 export function getSchemaSql(): string {
-  const schemaPath = path.resolve(__dirname, 'schema.sql');
-  if (fs.existsSync(schemaPath)) {
-    return fs.readFileSync(schemaPath, 'utf8');
-  }
-  const fallbackPath = path.resolve(__dirname, '../../db/schema.sql');
-  if (fs.existsSync(fallbackPath)) {
-    return fs.readFileSync(fallbackPath, 'utf8');
-  }
-  const rootPath = path.resolve(process.cwd(), 'server/db/schema.sql');
-  if (fs.existsSync(rootPath)) {
-    return fs.readFileSync(rootPath, 'utf8');
-  }
-  return fs.readFileSync(schemaPath, 'utf8');
+  const candidates = [
+    path.resolve(__dirname, 'schema.sql'),
+    path.resolve(__dirname, '../../db/schema.sql'),
+  ];
+  const found = candidates.find((p) => fs.existsSync(p)) || candidates[0];
+  return fs.readFileSync(found, 'utf8');
 }
 
 export function initDatabase(dbPath?: string): DatabaseType {

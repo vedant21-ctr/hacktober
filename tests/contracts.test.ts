@@ -1,3 +1,4 @@
+import * as sharedBarrel from '../shared/index.js';
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -266,5 +267,15 @@ describe('Gemma Schemas', () => {
       ],
     };
     expect(() => GemmaPassBOutputSchema.parse(invalidPassB)).toThrow();
+  });
+});
+
+describe('Shared Contract Barrel Exports', () => {
+  it('exposes all schemas, enums, gemma prompts, and normalization functions', () => {
+    expect(sharedBarrel.DecisionDetailSchema).toBeDefined();
+    expect(sharedBarrel.decisionStatusValues).toBeDefined();
+    expect(sharedBarrel.GemmaPassAOutputSchema).toBeDefined();
+    expect(sharedBarrel.normalizeText).toBeDefined();
+    expect(typeof sharedBarrel.normalizeText).toBe('function');
   });
 });

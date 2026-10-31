@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "concurrently -k -p \"[{name}]\" -n \"server,web\" -c \"blue.bold,green.bold\" \"npm run dev --workspace=@decisionvault/server\" \"npm run dev --workspace=@decisionvault/web\"",
     "build": "npm run build --workspace=@decisionvault/shared && npm run build --workspace=@decisionvault/server && npm run build --workspace=@decisionvault/web",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build --workspace=@decisionvault/shared && npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -1,7 +1,9 @@
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
 export default defineConfig({
+  plugins: [react()],
   test: {
     environment: 'node',
     globals: true,
@@ -15,6 +17,7 @@ export default defineConfig({
         '**/fixtures/**',
         '**/*.test.ts',
         'server/index.ts', // Server startup wrapper tested via integration/E2E
+        'shared/index.ts', // Pure re-export barrel
       ],
       thresholds: {
         statements: 80,

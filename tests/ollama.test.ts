@@ -16,6 +16,18 @@ describe('Ollama LLM Interface & Replay Mechanism', () => {
   it('defaults to replay mode when LLM_MODE is unset or specified', () => {
     const client = new OllamaClient({ mode: 'replay' });
     expect(client.mode).toBe('replay');
+
+    const clientExplicit = new OllamaClient({ model: 'gemma4:e4b', mode: 'live' });
+    expect(clientExplicit.mode).toBe('live');
+    expect(clientExplicit.model).toBe('gemma4:e4b');
+
+    process.env.LLM_MODE = 'live';
+    const clientEnv = new OllamaClient();
+    expect(clientEnv.mode).toBe('live');
+    delete process.env.LLM_MODE;
+
+    const clientDefault = new OllamaClient();
+    expect(clientDefault.mode).toBe('replay');
   });
 
   it('generates deterministic SHA-256 cache keys', () => {
