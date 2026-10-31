@@ -79,10 +79,10 @@ In addition to `.github/workflows/ci.yml`, two automated security workflows are 
 
 ## 5. Troubleshooting CI Failures
 
-| Step Failing                   | Common Cause                                        | Resolution                                                            |
-| ------------------------------ | --------------------------------------------------- | --------------------------------------------------------------------- |
-| `Install dependencies`         | `package-lock.json` out of sync with `package.json` | Run `npm install` locally and commit the updated `package-lock.json`. |
-| `Check code formatting`        | Unformatted files modified                          | Run `npm run format` locally and commit.                              |
-| `Verify TypeScript types`      | Type errors in shared, server, or web               | Run `npm run typecheck` locally to view compiler diagnostics.         |
-| `Run unit & integration tests` | Broken assertion or coverage threshold missed       | Run `npm run test:coverage` to inspect coverage breakdown.            |
-| `Run Playwright E2E tests`     | Port conflicts or unrendered DOM selectors          | Run `npm run test:e2e` locally.                                       |
+| Step Failing                   | Common Cause                                                              | Resolution                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `Install dependencies`         | `package-lock.json` out of sync with `package.json`                       | Run `npm install` locally and commit the updated `package-lock.json`.                                                               |
+| `Check code formatting`        | Unformatted files modified                                                | Run `npm run format` locally and commit.                                                                                            |
+| `Verify TypeScript types`      | Missing `@decisionvault/shared` declarations or type errors in server/web | `npm run typecheck` automatically compiles `@decisionvault/shared` first before running `tsc --noEmit` across dependent workspaces. |
+| `Run unit & integration tests` | Broken assertion or coverage threshold missed                             | Run `npm run test:coverage` to inspect coverage breakdown.                                                                          |
+| `Run Playwright E2E tests`     | Port conflicts or unrendered DOM selectors                                | Run `npm run test:e2e` locally.                                                                                                     |
