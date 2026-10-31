@@ -60,10 +60,18 @@ export const JobAcceptedResponseSchema = z.object({
 export type JobAcceptedResponse = z.infer<typeof JobAcceptedResponseSchema>;
 
 // POST /api/extract
-export const ExtractRequestSchema = z.object({
-  repoId: z.number().int().optional(),
-  sourceIds: z.array(z.number().int()).optional(),
-});
+export const ExtractRequestSchema = z
+  .object({
+    repoId: z.number().int().positive().optional(),
+    sourceIds: z.array(z.number().int().positive()).min(1).optional(),
+  })
+  .refine(
+    (data) =>
+      data.repoId !== undefined || (data.sourceIds !== undefined && data.sourceIds.length > 0),
+    {
+      message: 'Either repoId or non-empty sourceIds must be specified',
+    },
+  );
 export type ExtractRequest = z.infer<typeof ExtractRequestSchema>;
 
 // GET /api/jobs/:id
@@ -228,12 +236,18 @@ export type OverviewResponse = z.infer<typeof OverviewResponseSchema>;
 
 // GET /api/decisions
 export const DecisionsQuerySchema = z.object({
-  repoId: z.coerce.number().int().optional(),
+  repoId: z.coerce.number().int().positive().optional(),
   status: z.enum(decisionStatusValues).optional(),
   lifecycle: z.enum(lifecycleValues).optional(),
-  q: z.string().optional(),
+  q: z.string().max(200, 'Search query must not exceed 200 characters').optional(),
   page: z.coerce.number().int().positive().optional().default(1),
-  pageSize: z.coerce.number().int().positive().optional().default(20),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(100, 'Page size must not exceed 100')
+    .optional()
+    .default(20),
 });
 export type DecisionsQuery = z.infer<typeof DecisionsQuerySchema>;
 

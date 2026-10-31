@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { getDatabase, initDatabase } from './db/index.js';
 import { OLLAMA_SUPPORTED_MODEL } from './llm/ollama.js';
 import { GitHubIngestService, IngestError, parseGitHubTarget } from './ingest/github.js';
+import { ExtractionService, extractionLockManager } from './extract/service.js';
 import { jobManager } from './jobs.js';
 import {
   standardRateLimiter,
@@ -14,7 +15,9 @@ import {
   BenchmarkConfirmRequestSchema,
   BenchmarkRunRequestSchema,
   CodeWhyQuerySchema,
+  DecisionDetailSchema,
   DecisionsQuerySchema,
+  DecisionsResponseSchema,
   ExtractRequestSchema,
   ImportRequestSchema,
   JobSchema,
@@ -121,7 +124,7 @@ app.post('/api/imports', standardRateLimiter, async (req: Request, res: Response
 });
 
 // POST /api/extract
-app.post('/api/extract', (req: Request, res: Response) => {
+app.post('/api/extract', standardRateLimiter, async (req: Request, res: Response) => {
   const parsed = ExtractRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -131,7 +134,75 @@ app.post('/api/extract', (req: Request, res: Response) => {
       },
     });
   }
-  return notImplementedHandler(req, res);
+
+  const { repoId, sourceIds } = parsed.data;
+
+  try {
+    const db = getDatabase();
+
+    if (repoId !== undefined) {
+      const repo = db.prepare('SELECT id FROM repositories WHERE id = ?').get(repoId);
+      if (!repo) {
+        return res.status(404).json({
+          error: {
+            code: 'NOT_FOUND',
+            message: `Repository #${repoId} was not found`,
+          },
+        });
+      }
+    }
+
+    if (sourceIds && sourceIds.length > 0) {
+      const placeholders = sourceIds.map(() => '?').join(',');
+      const countRow = db
+        .prepare(`SELECT COUNT(*) as c FROM sources WHERE id IN (${placeholders})`)
+        .get(...sourceIds) as { c: number } | undefined;
+      if (!countRow || countRow.c === 0) {
+        return res.status(404).json({
+          error: {
+            code: 'NOT_FOUND',
+            message: 'None of the specified sources were found in the database',
+          },
+        });
+      }
+    }
+
+    // Concurrency Lock: Prevent simultaneous extractions on overlapping repositories or sources
+    const lockResult = extractionLockManager.tryAcquire({ db, repoId, sourceIds });
+    if (!lockResult.acquired) {
+      return res.status(409).json({
+        error: {
+          code: 'CONFLICT',
+          message: lockResult.reason,
+        },
+      });
+    }
+
+    const targetDesc = repoId !== undefined ? `repository #${repoId}` : 'targeted sources';
+    const job = jobManager.createJob('extract_decisions', targetDesc);
+
+    // Background execution of Gemma decision extraction pipeline
+    const extractionService = new ExtractionService();
+    extractionService
+      .extract({ jobId: job.id, repoId, sourceIds })
+      .finally(() => {
+        lockResult.release();
+      })
+      .catch((err) => {
+        console.error(`Background decision extraction failed for job #${job.id}:`, err);
+      });
+
+    return res.status(202).json({
+      jobId: job.id,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: err instanceof Error ? err.message : 'Failed to initiate extraction',
+      },
+    });
+  }
 });
 
 // GET /api/jobs/:id
@@ -243,18 +314,108 @@ app.get('/api/overview', standardRateLimiter, (req: Request, res: Response) => {
         : db.prepare('SELECT COUNT(*) as count FROM decisions').get();
     const decisionsCount = (decisionsQuery as { count: number })?.count || 0;
 
+    const acceptedQuery =
+      repoId !== undefined
+        ? db
+            .prepare(
+              "SELECT COUNT(*) as count FROM decisions d JOIN sources s ON d.source_id = s.id WHERE s.repo_id = ? AND d.status = 'accepted'",
+            )
+            .get(repoId)
+        : db.prepare("SELECT COUNT(*) as count FROM decisions WHERE status = 'accepted'").get();
+    const acceptedCount = (acceptedQuery as { count: number })?.count || 0;
+
+    const rejectedQuery =
+      repoId !== undefined
+        ? db
+            .prepare(
+              "SELECT COUNT(*) as count FROM decisions d JOIN sources s ON d.source_id = s.id WHERE s.repo_id = ? AND d.status = 'rejected'",
+            )
+            .get(repoId)
+        : db.prepare("SELECT COUNT(*) as count FROM decisions WHERE status = 'rejected'").get();
+    const rejectedCount = (rejectedQuery as { count: number })?.count || 0;
+
+    const unresolvedQuery =
+      repoId !== undefined
+        ? db
+            .prepare(
+              "SELECT COUNT(*) as count FROM decisions d JOIN sources s ON d.source_id = s.id WHERE s.repo_id = ? AND d.status = 'unresolved'",
+            )
+            .get(repoId)
+        : db.prepare("SELECT COUNT(*) as count FROM decisions WHERE status = 'unresolved'").get();
+    const unresolvedCount = (unresolvedQuery as { count: number })?.count || 0;
+
+    const unverifiedClaimsQuery =
+      repoId !== undefined
+        ? db
+            .prepare(
+              'SELECT COUNT(*) as count FROM evidence e JOIN decisions d ON e.decision_id = d.id JOIN sources s ON d.source_id = s.id WHERE s.repo_id = ? AND e.verified = 0',
+            )
+            .get(repoId)
+        : db.prepare('SELECT COUNT(*) as count FROM evidence WHERE verified = 0').get();
+    const unverifiedClaims = (unverifiedClaimsQuery as { count: number })?.count || 0;
+
+    // Attention items: decisions that are unresolved, low confidence, or have unverified claims
+    const attentionRows = db
+      .prepare(
+        repoId !== undefined
+          ? `SELECT d.id, d.title, d.status, d.lifecycle, d.summary, d.confidence, s.url as sourceUrl, s.title as sourceTitle
+             FROM decisions d
+             JOIN sources s ON d.source_id = s.id
+             WHERE s.repo_id = ? AND (d.status = 'unresolved' OR d.confidence < 0.7)
+             ORDER BY d.confidence ASC, d.id DESC
+             LIMIT 5`
+          : `SELECT d.id, d.title, d.status, d.lifecycle, d.summary, d.confidence, s.url as sourceUrl, s.title as sourceTitle
+             FROM decisions d
+             JOIN sources s ON d.source_id = s.id
+             WHERE d.status = 'unresolved' OR d.confidence < 0.7
+             ORDER BY d.confidence ASC, d.id DESC
+             LIMIT 5`,
+      )
+      .all(repoId !== undefined ? [repoId] : []) as Array<{
+      id: number;
+      title: string;
+      status: string;
+      lifecycle: string;
+      summary: string;
+      confidence: number;
+      sourceUrl: string;
+      sourceTitle: string;
+    }>;
+
+    const evRatioStmt = db.prepare(
+      'SELECT SUM(CASE WHEN verified = 1 THEN 1 ELSE 0 END) as vCount, COUNT(*) as tCount FROM evidence WHERE decision_id = ?',
+    );
+
+    const attention = attentionRows.map((r) => {
+      const stats = evRatioStmt.get(r.id) as { vCount: number; tCount: number } | undefined;
+      const vCount = stats?.vCount || 0;
+      const tCount = stats?.tCount || 0;
+      const verifiedRatio = tCount > 0 ? Math.round((vCount / tCount) * 100) / 100 : 0;
+      return {
+        id: r.id,
+        title: r.title,
+        status: r.status,
+        lifecycle: r.lifecycle,
+        summary: r.summary,
+        confidence: r.confidence,
+        sourceUrl: r.sourceUrl,
+        sourceTitle: r.sourceTitle,
+        verifiedRatio,
+      };
+    });
+
     const overviewData = {
       counts: {
         sources: sourcesCount,
         decisions: decisionsCount,
         byStatus: {
-          accepted: 0,
-          rejected: 0,
-          unresolved: 0,
+          accepted: acceptedCount,
+          rejected: rejectedCount,
+          unresolved: unresolvedCount,
         },
-        unverifiedClaims: 0,
+        unverifiedClaims,
       },
-      attention: [],
+      attention,
       topFiles: [],
     };
 
@@ -271,7 +432,7 @@ app.get('/api/overview', standardRateLimiter, (req: Request, res: Response) => {
 });
 
 // GET /api/decisions
-app.get('/api/decisions', (req: Request, res: Response) => {
+app.get('/api/decisions', standardRateLimiter, (req: Request, res: Response) => {
   const parsed = DecisionsQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({
@@ -281,11 +442,378 @@ app.get('/api/decisions', (req: Request, res: Response) => {
       },
     });
   }
-  return notImplementedHandler(req, res);
+
+  const { repoId, status, lifecycle, q, page = 1, pageSize = 20 } = parsed.data;
+
+  try {
+    const db = getDatabase();
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
+
+    if (repoId !== undefined) {
+      conditions.push('s.repo_id = ?');
+      params.push(repoId);
+    }
+
+    if (status) {
+      conditions.push('d.status = ?');
+      params.push(status);
+    }
+
+    if (lifecycle) {
+      conditions.push('d.lifecycle = ?');
+      params.push(lifecycle);
+    }
+
+    if (q && q.trim()) {
+      conditions.push('d.id IN (SELECT rowid FROM decisions_fts WHERE decisions_fts MATCH ?)');
+      const safeFts = q.trim().replace(/"/g, '""');
+      params.push(`"${safeFts}"`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM decisions d
+      JOIN sources s ON d.source_id = s.id
+      ${whereClause}
+    `;
+    const total = (db.prepare(countQuery).get(...params) as { total: number })?.total || 0;
+
+    const offset = (page - 1) * pageSize;
+    const selectQuery = `
+      SELECT d.id, d.title, d.status, d.lifecycle, d.summary, d.confidence, s.url as sourceUrl, s.title as sourceTitle
+      FROM decisions d
+      JOIN sources s ON d.source_id = s.id
+      ${whereClause}
+      ORDER BY d.id DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const rows = db.prepare(selectQuery).all(...params, pageSize, offset) as Array<{
+      id: number;
+      title: string;
+      status: string;
+      lifecycle: string;
+      summary: string;
+      confidence: number;
+      sourceUrl: string;
+      sourceTitle: string;
+    }>;
+
+    const evRatioStmt = db.prepare(
+      'SELECT SUM(CASE WHEN verified = 1 THEN 1 ELSE 0 END) as vCount, COUNT(*) as tCount FROM evidence WHERE decision_id = ?',
+    );
+
+    const items = rows.map((r) => {
+      const stats = evRatioStmt.get(r.id) as { vCount: number; tCount: number } | undefined;
+      const vCount = stats?.vCount || 0;
+      const tCount = stats?.tCount || 0;
+      const verifiedRatio = tCount > 0 ? Math.round((vCount / tCount) * 100) / 100 : 0;
+
+      return {
+        id: r.id,
+        title: r.title,
+        status: r.status,
+        lifecycle: r.lifecycle,
+        summary: r.summary,
+        confidence: r.confidence,
+        sourceUrl: r.sourceUrl,
+        sourceTitle: r.sourceTitle,
+        verifiedRatio,
+      };
+    });
+
+    const validated = DecisionsResponseSchema.parse({ items, total });
+    return res.json(validated);
+  } catch (err) {
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: err instanceof Error ? err.message : 'Failed to query decisions',
+      },
+    });
+  }
 });
 
 // GET /api/decisions/:id
-app.get('/api/decisions/:id', notImplementedHandler);
+app.get('/api/decisions/:id', standardRateLimiter, (req: Request, res: Response) => {
+  const id = parseInt(req.params.id, 10);
+  if (Number.isNaN(id)) {
+    return res.status(400).json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Decision ID must be an integer',
+      },
+    });
+  }
+
+  try {
+    const db = getDatabase();
+    const decRow = db
+      .prepare(
+        `SELECT d.id, d.source_id, d.title, d.status, d.lifecycle, d.summary, d.confidence, d.confidence_parts,
+                s.url as sourceUrl, s.title as sourceTitle
+         FROM decisions d
+         JOIN sources s ON d.source_id = s.id
+         WHERE d.id = ?`,
+      )
+      .get(id) as
+      | {
+          id: number;
+          source_id: number;
+          title: string;
+          status: string;
+          lifecycle: string;
+          summary: string;
+          confidence: number;
+          confidence_parts: string;
+          sourceUrl: string;
+          sourceTitle: string;
+        }
+      | undefined;
+
+    if (!decRow) {
+      return res.status(404).json({
+        error: {
+          code: 'NOT_FOUND',
+          message: `Decision #${id} was not found`,
+        },
+      });
+    }
+
+    // Fetch decision_evidence (evidence without alternative_id)
+    const decEvidenceRows = db
+      .prepare(
+        `SELECT e.id, e.quote, e.claim_type, e.verified, e.verification_method, e.match_score, e.created_at,
+                c.author, c.author_role, c.url
+         FROM evidence e
+         JOIN comments c ON e.comment_id = c.id
+         WHERE e.decision_id = ? AND e.alternative_id IS NULL
+         ORDER BY e.id ASC`,
+      )
+      .all(id) as Array<{
+      id: number;
+      quote: string;
+      claim_type: string;
+      verified: number;
+      verification_method: string;
+      match_score: number;
+      created_at: string;
+      author: string;
+      author_role: string;
+      url: string;
+    }>;
+
+    const decisionEvidence = decEvidenceRows.map((e) => ({
+      id: e.id,
+      quote: e.quote,
+      claimType: e.claim_type,
+      verified: e.verified === 1,
+      method: e.verification_method,
+      score: e.match_score,
+      author: e.author,
+      role: e.author_role,
+      at: new Date(e.created_at).toISOString(),
+      url: e.url,
+    }));
+
+    // Fetch alternatives
+    const altRows = db
+      .prepare(
+        `SELECT id, name, description, outcome, reason, reason_category
+         FROM alternatives
+         WHERE decision_id = ?
+         ORDER BY id ASC`,
+      )
+      .all(id) as Array<{
+      id: number;
+      name: string;
+      description: string;
+      outcome: string;
+      reason: string | null;
+      reason_category: string | null;
+    }>;
+
+    const altEvidenceStmt = db.prepare(
+      `SELECT e.id, e.quote, e.claim_type, e.verified, e.verification_method, e.match_score, e.created_at,
+              c.author, c.author_role, c.url
+       FROM evidence e
+       JOIN comments c ON e.comment_id = c.id
+       WHERE e.alternative_id = ?
+       ORDER BY e.id ASC`,
+    );
+
+    const conditionsStmt = db.prepare(
+      `SELECT id, text, kind, probe, probe_value
+       FROM conditions
+       WHERE alternative_id = ?
+       ORDER BY id ASC`,
+    );
+
+    const alternatives = altRows.map((alt) => {
+      const altEvRows = altEvidenceStmt.all(alt.id) as Array<{
+        id: number;
+        quote: string;
+        claim_type: string;
+        verified: number;
+        verification_method: string;
+        match_score: number;
+        created_at: string;
+        author: string;
+        author_role: string;
+        url: string;
+      }>;
+
+      const altEvidence = altEvRows.map((e) => ({
+        id: e.id,
+        quote: e.quote,
+        claimType: e.claim_type,
+        verified: e.verified === 1,
+        method: e.verification_method,
+        score: e.match_score,
+        author: e.author,
+        role: e.author_role,
+        at: new Date(e.created_at).toISOString(),
+        url: e.url,
+      }));
+
+      const condRows = conditionsStmt.all(alt.id) as Array<{
+        id: number;
+        text: string;
+        kind: string;
+        probe: string;
+        probe_value: string | null;
+      }>;
+
+      const conditions = condRows.map((c) => ({
+        id: c.id,
+        text: c.text,
+        kind: c.kind,
+        probe: c.probe,
+        probeValue: c.probe_value,
+        health: null,
+      }));
+
+      return {
+        id: alt.id,
+        name: alt.name,
+        description: alt.description,
+        outcome: alt.outcome,
+        reason: alt.reason,
+        reasonCategory: alt.reason_category,
+        evidence: altEvidence,
+        conditions,
+      };
+    });
+
+    // Fetch decision_files
+    const fileRows = db
+      .prepare(
+        `SELECT path, current_path, link_kind, basis, commit_sha
+         FROM decision_files
+         WHERE decision_id = ?`,
+      )
+      .all(id) as Array<{
+      path: string;
+      current_path: string | null;
+      link_kind: string;
+      basis: string;
+      commit_sha: string | null;
+    }>;
+
+    const files = fileRows.map((f) => ({
+      path: f.path,
+      currentPath: f.current_path,
+      linkKind: f.link_kind,
+      basis: f.basis,
+      commitSha: f.commit_sha,
+    }));
+
+    // Fetch decision_events
+    const eventRows = db
+      .prepare(
+        `SELECT event_type, occurred_at, source_url
+         FROM decision_events
+         WHERE decision_id = ?
+         ORDER BY occurred_at ASC`,
+      )
+      .all(id) as Array<{
+      event_type: string;
+      occurred_at: string;
+      source_url: string;
+    }>;
+
+    const events = eventRows.map((ev) => ({
+      type: ev.event_type,
+      at: new Date(ev.occurred_at).toISOString(),
+      url: ev.source_url,
+    }));
+
+    // Fetch decision_relationships
+    const relRows = db
+      .prepare(
+        `SELECT relationship_type, target_decision_id
+         FROM decision_relationships
+         WHERE source_decision_id = ?`,
+      )
+      .all(id) as Array<{
+      relationship_type: string;
+      target_decision_id: number;
+    }>;
+
+    const relationships = relRows.map((r) => ({
+      type: r.relationship_type,
+      otherId: r.target_decision_id,
+    }));
+
+    // Compute verified ratio
+    let totalEvCount = decisionEvidence.length;
+    let totalVerifiedCount = decisionEvidence.filter((e) => e.verified).length;
+    for (const a of alternatives) {
+      totalEvCount += a.evidence.length;
+      totalVerifiedCount += a.evidence.filter((e) => e.verified).length;
+    }
+    const verifiedRatio =
+      totalEvCount > 0 ? Math.round((totalVerifiedCount / totalEvCount) * 100) / 100 : 0;
+
+    let confidenceParts = { coverage: 0, statement: 0, reasonCoverage: 1 };
+    try {
+      confidenceParts = JSON.parse(decRow.confidence_parts);
+    } catch {
+      // fallback
+    }
+
+    const response = {
+      id: decRow.id,
+      title: decRow.title,
+      status: decRow.status,
+      lifecycle: decRow.lifecycle,
+      summary: decRow.summary,
+      confidence: decRow.confidence,
+      sourceUrl: decRow.sourceUrl,
+      sourceTitle: decRow.sourceTitle,
+      verifiedRatio,
+      alternatives,
+      decisionEvidence,
+      files,
+      events,
+      relationships,
+      confidenceParts,
+    };
+
+    const validated = DecisionDetailSchema.parse(response);
+    return res.json(validated);
+  } catch (err) {
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: err instanceof Error ? err.message : 'Failed to query decision detail',
+      },
+    });
+  }
+});
 
 // GET /api/sources/:id
 app.get('/api/sources/:id', standardRateLimiter, (req: Request, res: Response) => {
@@ -538,6 +1066,11 @@ export {
   parseGitHubTarget,
   mapAuthorRole,
 } from './ingest/github.js';
+export { ExtractionService, extractionLockManager } from './extract/service.js';
+export { PassAService } from './extract/passA.js';
+export { PassBService } from './extract/passB.js';
+export { verifyQuote, calculateDecisionConfidence } from './verify/evidenceLock.js';
+export { OllamaClient, OLLAMA_SUPPORTED_MODEL, ReplayMissError } from './llm/ollama.js';
 export { jobManager, JobManager } from './jobs.js';
 export {
   standardRateLimiter,

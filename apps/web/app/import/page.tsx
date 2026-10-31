@@ -35,12 +35,18 @@ export default function ImportPage() {
           const updatedJob: Job = await res.json();
           setCurrentJob(updatedJob);
           if (updatedJob.status === 'succeeded') {
-            setSuccessMessage(
-              `Successfully imported ${updatedJob.progress.total} sources from GitHub repository.`,
-            );
-            fetchRepositories();
+            if (updatedJob.type === 'extract_decisions') {
+              setSuccessMessage(
+                `Decision extraction completed successfully! You can now view recovered decisions.`,
+              );
+            } else {
+              setSuccessMessage(
+                `Successfully imported ${updatedJob.progress.total} sources from GitHub repository.`,
+              );
+              fetchRepositories();
+            }
           } else if (updatedJob.status === 'failed') {
-            setFormError(updatedJob.error || 'Import job failed');
+            setFormError(updatedJob.error || 'Job failed');
           }
         } else if (res.status === 404) {
           setCurrentJob(null);
@@ -135,6 +141,29 @@ export default function ImportPage() {
       setFormError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleExtract(repoId: number) {
+    setFormError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || 'Failed to start extraction');
+      }
+      const jobRes = await fetch(`/api/jobs/${data.jobId}`);
+      if (jobRes.ok) {
+        const jobData = await jobRes.json();
+        setCurrentJob(jobData);
+      }
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -324,8 +353,21 @@ export default function ImportPage() {
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 font-mono">Repo ID: #{repo.id}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-500 font-mono">Repo #{repo.id}</span>
+                  <button
+                    onClick={() => handleExtract(repo.id)}
+                    disabled={Boolean(currentJob && currentJob.status === 'running')}
+                    className="rounded bg-emerald-600/80 hover:bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition disabled:opacity-50"
+                  >
+                    Extract Decisions
+                  </button>
+                  <a
+                    href={`/decisions?repoId=${repo.id}`}
+                    className="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition"
+                  >
+                    View Decisions →
+                  </a>
                 </div>
               </div>
             ))}
