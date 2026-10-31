@@ -6,6 +6,9 @@ import {
   OLLAMA_SUPPORTED_MODEL,
   ReplayMissError,
   generateCacheKey,
+  validateCacheKey,
+  resolveSafeFixturePath,
+  CACHE_KEY_REGEX,
 } from '@decisionvault/server/llm/ollama';
 
 describe('Ollama LLM Interface & Replay Mechanism', () => {
@@ -183,5 +186,59 @@ describe('Ollama LLM Interface & Replay Mechanism', () => {
     } finally {
       global.fetch = origFetch;
     }
+  });
+
+  describe('Cache Key Validation & Path Traversal Hardening', () => {
+    const validKey = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    const fixturesDir = path.resolve(process.cwd(), 'fixtures');
+
+    it('matches valid 64-character hex strings against CACHE_KEY_REGEX', () => {
+      expect(CACHE_KEY_REGEX.test(validKey)).toBe(true);
+      expect(CACHE_KEY_REGEX.test(validKey.toUpperCase())).toBe(true);
+      expect(() => validateCacheKey(validKey)).not.toThrow();
+    });
+
+    it('rejects malformed or non-hex cache keys', () => {
+      // Too short
+      expect(() => validateCacheKey('0123456789abcdef')).toThrow(/Invalid cache key format/);
+      // Too long
+      expect(() => validateCacheKey(validKey + 'a')).toThrow(/Invalid cache key format/);
+      // Non-hex characters
+      expect(() => validateCacheKey('g'.repeat(64))).toThrow(/Invalid cache key format/);
+      // Path traversal characters
+      expect(() => validateCacheKey('../'.repeat(16))).toThrow(/Invalid cache key format/);
+      // Empty or non-string
+      expect(() => validateCacheKey('')).toThrow(/Invalid cache key format/);
+      expect(() => validateCacheKey(null as any)).toThrow(/Invalid cache key format/);
+      expect(() => validateCacheKey(undefined as any)).toThrow(/Invalid cache key format/);
+    });
+
+    it('resolves safe fixture path strictly inside fixtures directory', () => {
+      const resolved = resolveSafeFixturePath(fixturesDir, validKey);
+      expect(resolved).toBe(path.resolve(fixturesDir, `${validKey}.json`));
+      expect(path.dirname(resolved)).toBe(fixturesDir);
+    });
+
+    it('blocks path traversal attempts in resolveSafeFixturePath', () => {
+      const traversalKeys = [
+        '../traversal',
+        '../../etc/passwd',
+        '..\\windows\\system32',
+        '/root/secret',
+        'validhexprefix' + '../'.repeat(10),
+      ];
+
+      for (const badKey of traversalKeys) {
+        expect(() => resolveSafeFixturePath(fixturesDir, badKey)).toThrow();
+      }
+    });
+
+    it('enforces safe fixture path via client.getSafeFixturePath()', () => {
+      const client = new OllamaClient({ fixturesDir });
+      const safePath = client.getSafeFixturePath(validKey);
+      expect(safePath).toBe(path.resolve(fixturesDir, `${validKey}.json`));
+
+      expect(() => client.getSafeFixturePath('../malicious')).toThrow(/Invalid cache key format/);
+    });
   });
 });

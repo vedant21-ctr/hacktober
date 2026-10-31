@@ -78,6 +78,81 @@ export function generateCacheKey(params: CacheKeyParams): string {
   return crypto.createHash('sha256').update(stablePayload, 'utf8').digest('hex');
 }
 
+export const CACHE_KEY_REGEX = /^[a-f0-9]{64}$/i;
+
+/**
+ * Validates that a cache key is strictly a 64-character hexadecimal SHA-256 digest.
+ */
+export function validateCacheKey(cacheKey: string): void {
+  if (typeof cacheKey !== 'string' || !CACHE_KEY_REGEX.test(cacheKey)) {
+    throw new Error(
+      `Invalid cache key format: expected 64-character hexadecimal SHA-256 digest, received '${String(cacheKey)}'`,
+    );
+  }
+}
+
+/**
+ * Resolves and validates that a fixture file path resides strictly inside fixturesDir.
+ * Enforces:
+ * 1. Cache key is strictly a 64-character hexadecimal SHA-256 digest.
+ * 2. Absolute canonical path containment within the resolved fixtures directory.
+ * 3. Prevention of path traversal, directory breakouts, and symlink escapes.
+ */
+export function resolveSafeFixturePath(fixturesDir: string, cacheKey: string): string {
+  validateCacheKey(cacheKey);
+
+  const resolvedBaseDir = path.resolve(fixturesDir);
+  const safeFileName = path.basename(`${cacheKey}.json`);
+  const targetPath = path.resolve(resolvedBaseDir, safeFileName);
+
+  // Check relative containment to prevent any directory breakout
+  const relative = path.relative(resolvedBaseDir, targetPath);
+  if (
+    relative.startsWith('..') ||
+    path.isAbsolute(relative) ||
+    relative.includes(path.sep + '..')
+  ) {
+    throw new Error(
+      `Path traversal detected: target path '${targetPath}' is outside fixtures directory '${resolvedBaseDir}'`,
+    );
+  }
+
+  const expectedPrefix = resolvedBaseDir.endsWith(path.sep)
+    ? resolvedBaseDir
+    : resolvedBaseDir + path.sep;
+
+  // Case-insensitive prefix check on Windows, exact prefix check elsewhere
+  if (
+    process.platform === 'win32'
+      ? !targetPath.toLowerCase().startsWith(expectedPrefix.toLowerCase())
+      : !targetPath.startsWith(expectedPrefix)
+  ) {
+    throw new Error(
+      `Target path '${targetPath}' does not reside within fixtures directory '${resolvedBaseDir}'`,
+    );
+  }
+
+  // If base directory exists, check realpath containment against symlink escapes
+  if (fs.existsSync(resolvedBaseDir)) {
+    const realBase = fs.realpathSync(resolvedBaseDir);
+    const realBasePrefix = realBase.endsWith(path.sep) ? realBase : realBase + path.sep;
+    if (fs.existsSync(targetPath)) {
+      const realTarget = fs.realpathSync(targetPath);
+      if (
+        process.platform === 'win32'
+          ? !realTarget.toLowerCase().startsWith(realBasePrefix.toLowerCase())
+          : !realTarget.startsWith(realBasePrefix)
+      ) {
+        throw new Error(
+          `Symlink escape detected: real path '${realTarget}' is outside fixtures directory '${realBase}'`,
+        );
+      }
+    }
+  }
+
+  return targetPath;
+}
+
 export interface OllamaClientOptions {
   baseUrl?: string;
   mode?: LlmMode;
@@ -100,6 +175,10 @@ export class OllamaClient {
     this.fixturesDir =
       options.fixturesDir || process.env.FIXTURES_DIR || path.resolve(process.cwd(), 'fixtures');
     this.timeoutMs = options.timeoutMs ?? 120000;
+  }
+
+  public getSafeFixturePath(cacheKey: string): string {
+    return resolveSafeFixturePath(this.fixturesDir, cacheKey);
   }
 
   public async isReachable(): Promise<boolean> {
@@ -133,8 +212,10 @@ export class OllamaClient {
       schemaHash: request.schemaHash,
     });
 
+    validateCacheKey(cacheKey);
+
     if (this.mode === 'replay') {
-      const fixturePath = path.join(this.fixturesDir, `${cacheKey}.json`);
+      const fixturePath = this.getSafeFixturePath(cacheKey);
       if (!fs.existsSync(fixturePath)) {
         throw new ReplayMissError(cacheKey);
       }
@@ -219,14 +300,12 @@ export class OllamaClient {
     };
 
     if (this.mode === 'record') {
-      if (!fs.existsSync(this.fixturesDir)) {
-        fs.mkdirSync(this.fixturesDir, { recursive: true });
+      const resolvedDir = path.resolve(this.fixturesDir);
+      if (!fs.existsSync(resolvedDir)) {
+        fs.mkdirSync(resolvedDir, { recursive: true });
       }
-      fs.writeFileSync(
-        path.join(this.fixturesDir, `${cacheKey}.json`),
-        JSON.stringify(response, null, 2),
-        'utf8',
-      );
+      const fixturePath = this.getSafeFixturePath(cacheKey);
+      fs.writeFileSync(fixturePath, JSON.stringify(response, null, 2), 'utf8');
     }
 
     return response;

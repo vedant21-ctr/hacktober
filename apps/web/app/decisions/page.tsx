@@ -278,6 +278,29 @@ export default function DecisionsPage() {
         </div>
       )}
 
+      {/* Loading Detail Modal */}
+      {loadingDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="rounded-lg border border-slate-700 bg-slate-900 px-6 py-4 shadow-2xl flex items-center gap-3">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+            <span className="text-sm font-mono text-slate-300">Loading decision detail...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Error Toast */}
+      {detailError && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-md rounded-lg border border-rose-500/30 bg-rose-950/90 p-4 text-xs font-mono text-rose-200 shadow-xl backdrop-blur-sm flex items-start justify-between gap-3">
+          <span>{detailError}</span>
+          <button
+            onClick={() => setDetailError(null)}
+            className="text-rose-400 hover:text-rose-100 font-bold ml-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Decision Detail Modal */}
       {selectedDecision && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">

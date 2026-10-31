@@ -267,7 +267,8 @@ describe('Express Server API', () => {
     vi.spyOn(ExtractionService.prototype, 'extract').mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          resolveExtract = () => resolve({ runId: 1, sourcesProcessed: 1, decisionsRecovered: 1, decisions: [] });
+          resolveExtract = () =>
+            resolve({ runId: 1, sourcesProcessed: 1, decisionsRecovered: 1, decisions: [] });
         }),
     );
 
@@ -282,7 +283,9 @@ describe('Express Server API', () => {
     expect(dupRepoRes.body.error.message).toContain('already being extracted');
 
     // 3. Overlapping extraction request on source 1 (which belongs to repo 1) returns 409
-    const overlapSourceRes = await request(app).post('/api/extract').send({ sourceIds: [1] });
+    const overlapSourceRes = await request(app)
+      .post('/api/extract')
+      .send({ sourceIds: [1] });
     expect(overlapSourceRes.status).toBe(409);
     expect(overlapSourceRes.body.error.code).toBe('CONFLICT');
 

@@ -2,11 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { getDatabase, initDatabase } from './db/index.js';
 import { OLLAMA_SUPPORTED_MODEL } from './llm/ollama.js';
 import { GitHubIngestService, IngestError, parseGitHubTarget } from './ingest/github.js';
-import {
-  ExtractionService,
-  extractionLockManager,
-  ExtractionLockManager,
-} from './extract/service.js';
+import { ExtractionService, extractionLockManager } from './extract/service.js';
 import { jobManager } from './jobs.js';
 import {
   standardRateLimiter,
@@ -1070,11 +1066,7 @@ export {
   parseGitHubTarget,
   mapAuthorRole,
 } from './ingest/github.js';
-export {
-  ExtractionService,
-  extractionLockManager,
-  ExtractionLockManager,
-} from './extract/service.js';
+export { ExtractionService, extractionLockManager } from './extract/service.js';
 export { PassAService } from './extract/passA.js';
 export { PassBService } from './extract/passB.js';
 export { verifyQuote, calculateDecisionConfidence } from './verify/evidenceLock.js';

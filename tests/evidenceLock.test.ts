@@ -4,7 +4,6 @@ import {
   calculateDecisionConfidence,
   stringSimilarity,
   MIN_QUOTE_LENGTH,
-  MAX_QUOTE_LENGTH,
 } from '../server/verify/evidenceLock.js';
 import { normalizeText } from '@decisionvault/shared/normalize';
 
