@@ -43,6 +43,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <a href="/import" className="text-slate-400 hover:text-emerald-400">
                   Import
                 </a>
+                <a href="/decisions" className="text-slate-400 hover:text-emerald-400">
+                  Decisions
+                </a>
               </nav>
             </div>
             <div className="text-xs text-slate-400 font-mono">

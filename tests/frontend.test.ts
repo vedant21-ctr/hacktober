@@ -5,18 +5,23 @@ import RootLayout from '../apps/web/app/layout';
 import HomePage from '../apps/web/app/page';
 import NotFound from '../apps/web/app/not-found';
 import ImportPage from '../apps/web/app/import/page';
+import DecisionsPage from '../apps/web/app/decisions/page';
 
 describe('Frontend Component State & Scaffold Verification', () => {
   it('renders HomePage without fabricated metrics or fake decision counts', () => {
-    const pageElement = HomePage();
-    expect(React.isValidElement(pageElement)).toBe(true);
-    // Convert to JSON or inspect props
-    const serialized = JSON.stringify(pageElement);
-    expect(serialized).toContain('DecisionVault');
-    expect(serialized).toContain('Contract Freeze Active');
-    expect(serialized).toContain('gemma4:e4b');
-    // Ensure no fake claims that pipeline extraction is finished
-    expect(serialized).toContain('Pipeline ingestion & extraction (Phase 2)');
+    const html = renderToStaticMarkup(React.createElement(HomePage));
+    expect(html).toContain('DecisionVault');
+    expect(html).toContain('Local AI Architecture');
+    expect(html).toContain('gemma4:e4b');
+    expect(html).toContain('Phase 3B: Gemma 4 E4B Decision Extraction');
+  });
+
+  it('renders DecisionsPage with filters and search inputs', () => {
+    const html = renderToStaticMarkup(React.createElement(DecisionsPage));
+    expect(html).toContain('Recovered Decisions');
+    expect(html).toContain('All Repositories');
+    expect(html).toContain('Decision Status');
+    expect(html).toContain('Search FTS5 Index');
   });
 
   it('renders ImportPage with repository form and status elements', () => {

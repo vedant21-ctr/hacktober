@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
 import {
   OllamaClient,
   OLLAMA_SUPPORTED_MODEL,
@@ -79,9 +81,10 @@ describe('Ollama LLM Interface & Replay Mechanism', () => {
     expect(customErr.message).toBe('Custom replay failure');
   });
 
-  it('throws "Not implemented" for chat and isReachable without network calls in Phase 1/2A', async () => {
+  it('handles replay mode misses and rejects unsupported models', async () => {
     const client = new OllamaClient({ mode: 'replay' });
 
+    // Replay miss throws ReplayMissError
     await expect(
       client.chat({
         model: 'gemma4:e4b',
@@ -90,8 +93,95 @@ describe('Ollama LLM Interface & Replay Mechanism', () => {
         userPrompt: 'user',
         schemaHash: 'hash',
       }),
-    ).rejects.toThrow('Not implemented');
+    ).rejects.toThrow(ReplayMissError);
 
-    await expect(client.isReachable()).rejects.toThrow('Not implemented');
+    // Unsupported model throws
+    await expect(
+      client.chat({
+        model: 'llama3:latest' as any,
+        promptVersion: 'v1',
+        systemPrompt: 'sys',
+        userPrompt: 'user',
+        schemaHash: 'hash',
+      }),
+    ).rejects.toThrow(/not supported/);
+  });
+
+  it('reports isReachable as false when Ollama endpoint is down', async () => {
+    const client = new OllamaClient({ baseUrl: 'http://127.0.0.1:59999' });
+    const reachable = await client.isReachable();
+    expect(reachable).toBe(false);
+  });
+
+  it('reads cached fixture in replay mode when fixture file exists on disk', async () => {
+    const tmpDir = path.resolve(process.cwd(), 'fixtures_test');
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    }
+
+    const client = new OllamaClient({ mode: 'replay', fixturesDir: tmpDir });
+    const req = {
+      model: OLLAMA_SUPPORTED_MODEL,
+      promptVersion: 'v1.0.0',
+      systemPrompt: 'test sys',
+      userPrompt: 'test user',
+      schemaHash: 'hash123',
+    };
+    const key = generateCacheKey(req);
+    const fixtureFile = path.join(tmpDir, `${key}.json`);
+
+    fs.writeFileSync(
+      fixtureFile,
+      JSON.stringify({
+        model: 'gemma4:e4b',
+        promptVersion: 'v1.0.0',
+        cacheKey: key,
+        data: { test: 'hello replay' },
+        tokensPerSec: 45.2,
+      }),
+      'utf8',
+    );
+
+    try {
+      const response = await client.chat<{ test: string }>(req);
+      expect(response.data).toEqual({ test: 'hello replay' });
+      expect(response.tokensPerSec).toBe(45.2);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('checks isReachable with model availability via mock tags response', async () => {
+    const client = new OllamaClient({ baseUrl: 'http://mock-ollama' });
+
+    // Mock fetch tags with model present
+    const origFetch = global.fetch;
+    try {
+      global.fetch = vi.fn().mockImplementation(async (url: string) => {
+        if (url.includes('/api/tags')) {
+          return {
+            ok: true,
+            json: async () => ({
+              models: [{ name: 'gemma4:e4b:latest' }, { name: 'other:latest' }],
+            }),
+          };
+        }
+        return { ok: false };
+      }) as any;
+
+      const hasModel = await client.isReachable();
+      expect(hasModel).toBe(true);
+
+      // Model absent
+      global.fetch = vi.fn().mockImplementation(async () => ({
+        ok: true,
+        json: async () => ({ models: [{ name: 'other:latest' }] }),
+      })) as any;
+
+      const missingModel = await client.isReachable();
+      expect(missingModel).toBe(false);
+    } finally {
+      global.fetch = origFetch;
+    }
   });
 });
