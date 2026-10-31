@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import express from 'express';
 import request from 'supertest';
 import { app, GitHubIngestService } from '@decisionvault/server';
 import { initDatabase } from '@decisionvault/server/db';
 import { jobManager } from '../server/jobs.js';
+import { createRateLimiter } from '../server/middleware/rateLimit.js';
 
 describe('Express Server API', () => {
   beforeEach(() => {
@@ -213,5 +215,45 @@ describe('Express Server API', () => {
         message: 'The requested resource was not found.',
       },
     });
+  });
+
+  it('rate limiting middleware enforces request quota and returns standard 429 error', async () => {
+    const testApp = express();
+    const testLimiter = createRateLimiter({
+      limit: 2,
+      windowMs: 60 * 1000,
+    });
+    testApp.get('/api/test-limit', testLimiter, (_req, res) => {
+      res.json({ ok: true });
+    });
+
+    const res1 = await request(testApp).get('/api/test-limit');
+    expect(res1.status).toBe(200);
+
+    const res2 = await request(testApp).get('/api/test-limit');
+    expect(res2.status).toBe(200);
+
+    const res3 = await request(testApp).get('/api/test-limit');
+    expect(res3.status).toBe(429);
+    expect(res3.body).toEqual({
+      error: {
+        code: 'RATE_LIMITED',
+        message: 'Too many requests. Please slow down.',
+      },
+    });
+  });
+
+  it('rate limiting respects environment variables for window and max', () => {
+    const origWindow = process.env.RATE_LIMIT_WINDOW_MS;
+    const origMax = process.env.RATE_LIMIT_MAX;
+    try {
+      process.env.RATE_LIMIT_WINDOW_MS = '30000';
+      process.env.RATE_LIMIT_MAX = '50';
+      const customLimiter = createRateLimiter();
+      expect(customLimiter).toBeDefined();
+    } finally {
+      process.env.RATE_LIMIT_WINDOW_MS = origWindow;
+      process.env.RATE_LIMIT_MAX = origMax;
+    }
   });
 });

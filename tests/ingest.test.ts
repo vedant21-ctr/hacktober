@@ -31,6 +31,12 @@ describe('GitHub Ingestion — URL Validation & SSRF Prevention', () => {
       owner: 'facebook',
       repo: 'react',
     });
+    // Multi-slash trimming and ReDoS resilience
+    const deepSlashes = `${'/'.repeat(2000)}facebook/react${'/'.repeat(2000)}`;
+    expect(parseGitHubTarget(deepSlashes)).toEqual({
+      owner: 'facebook',
+      repo: 'react',
+    });
   });
 
   it('rejects SSRF attempts pointing to non-GitHub domains or internal IPs', () => {

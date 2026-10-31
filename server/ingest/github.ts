@@ -51,8 +51,19 @@ export function parseGitHubTarget(target: string): { owner: string; repo: string
     }
   }
 
-  // Strip leading/trailing slashes and .git suffix
-  cleaned = cleaned.replace(/^\/+|\/+$/g, '').replace(/\.git$/i, '');
+  // Strip leading/trailing slashes and .git suffix in linear time (replaces ReDoS-prone polynomial regex)
+  while (cleaned.startsWith('/')) {
+    cleaned = cleaned.slice(1);
+  }
+  while (cleaned.endsWith('/')) {
+    cleaned = cleaned.slice(0, -1);
+  }
+  if (cleaned.toLowerCase().endsWith('.git')) {
+    cleaned = cleaned.slice(0, -4);
+  }
+  while (cleaned.endsWith('/')) {
+    cleaned = cleaned.slice(0, -1);
+  }
 
   const parts = cleaned.split('/');
   if (parts.length !== 2) {

@@ -3,6 +3,11 @@ import { getDatabase, initDatabase } from './db/index.js';
 import { OLLAMA_SUPPORTED_MODEL } from './llm/ollama.js';
 import { GitHubIngestService, IngestError, parseGitHubTarget } from './ingest/github.js';
 import { jobManager } from './jobs.js';
+import {
+  standardRateLimiter,
+  pollingRateLimiter,
+  createRateLimiter,
+} from './middleware/rateLimit.js';
 import type { LlmMode } from '@decisionvault/shared/enums';
 import {
   AskRequestSchema,
@@ -37,7 +42,7 @@ const notImplementedHandler = (_req: Request, res: Response) => {
 };
 
 // GET /api/status
-app.get('/api/status', (_req: Request, res: Response) => {
+app.get('/api/status', pollingRateLimiter, (_req: Request, res: Response) => {
   try {
     const db = getDatabase();
     // Verify DB can execute a query
@@ -70,7 +75,7 @@ app.get('/api/status', (_req: Request, res: Response) => {
 });
 
 // POST /api/imports
-app.post('/api/imports', async (req: Request, res: Response) => {
+app.post('/api/imports', standardRateLimiter, async (req: Request, res: Response) => {
   const parsed = ImportRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -130,7 +135,7 @@ app.post('/api/extract', (req: Request, res: Response) => {
 });
 
 // GET /api/jobs/:id
-app.get('/api/jobs/:id', (req: Request, res: Response) => {
+app.get('/api/jobs/:id', pollingRateLimiter, (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id)) {
     return res.status(400).json({
@@ -156,7 +161,7 @@ app.get('/api/jobs/:id', (req: Request, res: Response) => {
 });
 
 // GET /api/repositories
-app.get('/api/repositories', (_req: Request, res: Response) => {
+app.get('/api/repositories', standardRateLimiter, (_req: Request, res: Response) => {
   try {
     const db = getDatabase();
     const rows = db
@@ -194,7 +199,7 @@ app.get('/api/repositories', (_req: Request, res: Response) => {
 });
 
 // GET /api/overview
-app.get('/api/overview', (req: Request, res: Response) => {
+app.get('/api/overview', standardRateLimiter, (req: Request, res: Response) => {
   const parsed = OverviewQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({
@@ -283,7 +288,7 @@ app.get('/api/decisions', (req: Request, res: Response) => {
 app.get('/api/decisions/:id', notImplementedHandler);
 
 // GET /api/sources/:id
-app.get('/api/sources/:id', (req: Request, res: Response) => {
+app.get('/api/sources/:id', standardRateLimiter, (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id)) {
     return res.status(400).json({
@@ -534,6 +539,11 @@ export {
   mapAuthorRole,
 } from './ingest/github.js';
 export { jobManager, JobManager } from './jobs.js';
+export {
+  standardRateLimiter,
+  pollingRateLimiter,
+  createRateLimiter,
+} from './middleware/rateLimit.js';
 export const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
 
 export function startServer(port: number = PORT) {
