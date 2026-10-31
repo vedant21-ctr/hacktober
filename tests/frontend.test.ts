@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import RootLayout from '../apps/web/app/layout';
 import HomePage from '../apps/web/app/page';
 import NotFound from '../apps/web/app/not-found';
+import ImportPage from '../apps/web/app/import/page';
 
 describe('Frontend Component State & Scaffold Verification', () => {
   it('renders HomePage without fabricated metrics or fake decision counts', () => {
@@ -15,6 +17,14 @@ describe('Frontend Component State & Scaffold Verification', () => {
     expect(serialized).toContain('gemma4:e4b');
     // Ensure no fake claims that pipeline extraction is finished
     expect(serialized).toContain('Pipeline ingestion & extraction (Phase 2)');
+  });
+
+  it('renders ImportPage with repository form and status elements', () => {
+    const html = renderToStaticMarkup(React.createElement(ImportPage));
+    expect(html).toContain('Repository Ingestion');
+    expect(html).toContain('Import a Public Repository');
+    expect(html).toContain('Start GitHub Import');
+    expect(html).toContain('Imported Repositories');
   });
 
   it('renders NotFound (404) component correctly', () => {

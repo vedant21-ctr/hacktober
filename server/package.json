@@ -13,6 +13,7 @@
     "@decisionvault/shared": "*",
     "better-sqlite3": "^13.0.3",
     "express": "^4.21.1",
+    "express-rate-limit": "^8.7.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
