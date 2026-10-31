@@ -13,7 +13,14 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       include: ['server/**/*.ts', 'shared/**/*.ts'],
-      exclude: ['**/*.d.ts', '**/dist/**', '**/fixtures/**', '**/*.test.ts', 'server/index.ts'],
+      exclude: [
+        '**/*.d.ts',
+        '**/dist/**',
+        '**/fixtures/**',
+        '**/*.test.ts',
+        'server/index.ts', // Server startup wrapper tested via integration/E2E
+        'shared/index.ts', // Pure re-export barrel
+      ],
       thresholds: {
         statements: 80,
         lines: 80,

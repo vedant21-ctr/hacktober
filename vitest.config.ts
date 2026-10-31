@@ -17,6 +17,7 @@ export default defineConfig({
         '**/fixtures/**',
         '**/*.test.ts',
         'server/index.ts', // Server startup wrapper tested via integration/E2E
+        'shared/index.ts', // Pure re-export barrel
       ],
       thresholds: {
         statements: 80,
