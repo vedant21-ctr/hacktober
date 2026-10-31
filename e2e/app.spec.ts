@@ -44,6 +44,23 @@ test.describe('DecisionVault Phase 1/2A E2E Verification', () => {
     await expect(footer).toContainText('Team Glitch');
   });
 
+  test('import page renders repository form, status badges, and repository table', async ({
+    page,
+  }) => {
+    await page.goto('/import');
+
+    const heading = page.locator('h1');
+    await expect(heading).toContainText('Repository Ingestion');
+
+    // Input elements
+    await expect(page.locator('#target')).toBeVisible();
+    await expect(page.locator('#limit')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Start GitHub Import/i })).toBeVisible();
+
+    // Section for imported repositories
+    await expect(page.getByRole('heading', { name: 'Imported Repositories' })).toBeVisible();
+  });
+
   test('navigating to unknown route renders 404 page', async ({ page }) => {
     const response = await page.goto('/non-existent-page-test');
     expect(response?.status()).toBe(404);

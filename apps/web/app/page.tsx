@@ -17,6 +17,16 @@ export default function HomePage() {
         from open-source repository discussions.
       </p>
 
+      <div className="mt-6">
+        <a
+          href="/import"
+          className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors"
+        >
+          <span>Go to Repository Ingestion</span>
+          <span>→</span>
+        </a>
+      </div>
+
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-5">
           <h2 className="text-sm font-semibold text-slate-200">Contract Freeze Active</h2>
