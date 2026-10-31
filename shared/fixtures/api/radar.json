@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "decisionId": 12,
+      "title": "Remove CGI and related dead-battery modules (PEP 594)",
+      "alternativeName": "Retain cgi with community maintainers",
+      "condition": {
+        "id": 201,
+        "text": "Requires modern multipart parsing outside the standard library",
+        "kind": "dependency",
+        "probe": "none",
+        "probeValue": null,
+        "health": {
+          "state": "holds",
+          "signalType": "external_ecosystem",
+          "signalPath": "pyproject.toml",
+          "signalValue": "multipart>=0.0.5",
+          "details": "Modern alternative multipart parser package widely available on PyPI",
+          "interpretation": "Constraint holds; ecosystem has transitioned to external packages.",
+          "checkedAt": "2026-10-31T21:00:00.000Z"
+        }
+      },
+      "health": {
+        "state": "holds",
+        "signalType": "external_ecosystem",
+        "signalPath": "pyproject.toml",
+        "signalValue": "multipart>=0.0.5",
+        "details": "Modern alternative multipart parser package widely available on PyPI",
+        "interpretation": "Constraint holds; ecosystem has transitioned to external packages.",
+        "checkedAt": "2026-10-31T21:00:00.000Z"
+      }
+    }
+  ]
+}

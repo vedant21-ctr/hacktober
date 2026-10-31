@@ -1,0 +1,12 @@
+{
+  "id": 101,
+  "type": "import_github",
+  "status": "running",
+  "stage": "extract",
+  "progress": {
+    "done": 14,
+    "total": 35
+  },
+  "tokensPerSec": 28.4,
+  "startedAt": "2026-10-31T20:00:00.000Z"
+}

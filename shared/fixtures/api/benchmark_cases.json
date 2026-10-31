@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "PEP 594: Removing dead batteries",
+      "pepNumber": 594,
+      "goldCount": 19,
+      "lastRun": {
+        "runId": 2,
+        "f1": 0.82,
+        "precision": 0.85,
+        "recall": 0.79,
+        "reviewStatus": "human_confirmed",
+        "createdAt": "2026-10-31T22:00:00.000Z"
+      }
+    }
+  ]
+}

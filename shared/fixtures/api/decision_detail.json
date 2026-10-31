@@ -1,0 +1,99 @@
+{
+  "id": 12,
+  "title": "Remove CGI and related dead-battery modules (PEP 594)",
+  "status": "accepted",
+  "lifecycle": "active",
+  "summary": "Deprecate and remove cgi and other unmaintained standard library modules following PEP 594.",
+  "confidence": 0.94,
+  "sourceUrl": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932",
+  "sourceTitle": "PEP 594: Removing dead batteries from the standard library",
+  "verifiedRatio": 0.92,
+  "alternatives": [
+    {
+      "id": 101,
+      "name": "Retain cgi with community maintainers",
+      "description": "Keep cgi in the standard library but recruit external community maintainers.",
+      "outcome": "rejected",
+      "reason": "Security vulnerabilities in multipart parsing and lack of active standard library maintainers.",
+      "reasonCategory": "security",
+      "evidence": [
+        {
+          "id": 501,
+          "quote": "The cgi module has security liabilities and modern web frameworks have replaced it.",
+          "claimType": "rejection_reason",
+          "verified": true,
+          "method": "normalized_exact",
+          "score": 1.0,
+          "author": "brettcannon",
+          "role": "owner",
+          "at": "2019-05-20T14:32:00.000Z",
+          "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/4"
+        }
+      ],
+      "conditions": [
+        {
+          "id": 201,
+          "text": "Requires modern multipart parsing outside the standard library",
+          "kind": "dependency",
+          "probe": "none",
+          "probeValue": null,
+          "health": {
+            "state": "holds",
+            "signalType": "external_ecosystem",
+            "signalPath": "pyproject.toml",
+            "signalValue": "multipart>=0.0.5",
+            "details": "Modern alternative multipart parser package widely available on PyPI",
+            "interpretation": "Constraint holds; ecosystem has transitioned to external packages.",
+            "checkedAt": "2026-10-31T21:00:00.000Z"
+          }
+        }
+      ]
+    }
+  ],
+  "decisionEvidence": [
+    {
+      "id": 502,
+      "quote": "We have accepted PEP 594 and will proceed with deprecation in 3.11 and removal in 3.13.",
+      "claimType": "decision_statement",
+      "verified": true,
+      "method": "normalized_exact",
+      "score": 1.0,
+      "author": "steering-council",
+      "role": "owner",
+      "at": "2021-03-12T16:00:00.000Z",
+      "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/25"
+    }
+  ],
+  "files": [
+    {
+      "path": "Lib/cgi.py",
+      "currentPath": null,
+      "linkKind": "mentioned",
+      "basis": "Explicit file mention in deprecation discussion quote",
+      "commitSha": "b3e218204b73cb439bb7bb6293910c6abfbff191"
+    }
+  ],
+  "events": [
+    {
+      "type": "proposed",
+      "at": "2019-05-18T10:00:00.000Z",
+      "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/1"
+    },
+    {
+      "type": "decided",
+      "at": "2021-03-12T16:00:00.000Z",
+      "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/25"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "supersedes",
+      "otherId": 8
+    }
+  ],
+  "confidenceParts": {
+    "coverage": 1.0,
+    "statement": 1.0,
+    "reasonCoverage": 1.0
+  }
+}

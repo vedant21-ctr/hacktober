@@ -1,0 +1,22 @@
+{
+  "events": [
+    {
+      "type": "proposed",
+      "at": "2019-05-18T10:00:00.000Z",
+      "author": "brettcannon",
+      "role": "owner",
+      "quote": "PEP 594 proposes removing unmaintained modules from the standard library.",
+      "sourceUrl": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/1",
+      "verified": true
+    },
+    {
+      "type": "decided",
+      "at": "2021-03-12T16:00:00.000Z",
+      "author": "steering-council",
+      "role": "owner",
+      "quote": "We have accepted PEP 594 and will proceed with deprecation in 3.11 and removal in 3.13.",
+      "sourceUrl": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/25",
+      "verified": true
+    }
+  ]
+}

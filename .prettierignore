@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.next/
+coverage/
+playwright-report/
+test-results/
+*.db
+*.db-journal
+package-lock.json
+.git/
+

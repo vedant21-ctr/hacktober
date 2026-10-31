@@ -1,0 +1,28 @@
+{
+  "source": {
+    "id": 10,
+    "repoId": 1,
+    "kind": "pep_discussion",
+    "externalId": "discourse:python:1932",
+    "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932",
+    "title": "PEP 594: Removing dead batteries from the standard library",
+    "state": "closed",
+    "createdAt": "2019-05-18T10:00:00.000Z",
+    "closedAt": "2021-03-15T00:00:00.000Z",
+    "baseCommitSha": null
+  },
+  "comments": [
+    {
+      "id": 1,
+      "externalId": "c1",
+      "parentCommentId": null,
+      "idx": 0,
+      "author": "brettcannon",
+      "authorRole": "owner",
+      "createdAt": "2019-05-18T10:00:00.000Z",
+      "body": "PEP 594 proposes removing unmaintained modules from the standard library.",
+      "bodyNorm": "pep 594 proposes removing unmaintained modules from the standard library.",
+      "url": "https://discuss.python.org/t/pep-594-removing-dead-batteries/1932/1"
+    }
+  ]
+}
