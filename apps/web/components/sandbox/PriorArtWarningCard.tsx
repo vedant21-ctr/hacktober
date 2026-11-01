@@ -21,24 +21,24 @@ export function PriorArtWarningCard({
   const isRelated = item.relation === 'related';
 
   const containerBorder = isConflict
-    ? 'border-rose-500/40 bg-rose-950/20'
+    ? 'border-rose-500/30 bg-[#0e1424]/90'
     : isRelated
-      ? 'border-blue-500/40 bg-blue-950/20'
-      : 'border-slate-800 bg-slate-900/40';
+      ? 'border-slate-700/80 bg-[#0e1424]/90'
+      : 'border-slate-800 bg-[#0e1424]/70';
 
   const badgeColor = isConflict
-    ? 'bg-rose-950/80 text-rose-300 border-rose-700/70'
+    ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
     : isRelated
-      ? 'bg-blue-950/80 text-blue-300 border-blue-700/70'
+      ? 'bg-sky-500/10 text-sky-300 border-sky-500/30'
       : 'bg-slate-800 text-slate-300 border-slate-700';
 
   return (
     <div className={`rounded-lg border ${containerBorder} p-5 space-y-4 ${className}`}>
       {/* Warning Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/70 pb-3">
         <div className="flex items-center gap-2 flex-wrap">
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider border ${badgeColor}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium border ${badgeColor}`}
           >
             {isConflict && (
               <svg className="w-3.5 h-3.5 text-rose-400" viewBox="0 0 20 20" fill="currentColor">
@@ -62,7 +62,7 @@ export function PriorArtWarningCard({
 
         <Link
           href={`/decisions/${item.decision.id}`}
-          className="text-xs font-mono text-emerald-400 hover:text-emerald-300 inline-flex items-center gap-1"
+          className="text-xs text-emerald-400 hover:text-emerald-300 inline-flex items-center gap-1 font-medium transition-colors"
         >
           View Full Decision Dossier →
         </Link>
@@ -75,7 +75,7 @@ export function PriorArtWarningCard({
       </div>
 
       {/* Why it is relevant */}
-      <div className="rounded bg-slate-900/80 border border-slate-800 p-3.5 space-y-1">
+      <div className="rounded bg-slate-900/60 border border-slate-800 p-3.5 space-y-1">
         <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 block font-semibold">
           Relevance Analysis:
         </span>
@@ -84,7 +84,7 @@ export function PriorArtWarningCard({
 
       {/* Original Rejection Reasoning */}
       {item.rejectedBecause && (
-        <div className="rounded bg-rose-950/20 border border-rose-900/40 p-3.5 space-y-1">
+        <div className="rounded bg-rose-950/20 border border-rose-900/30 p-3.5 space-y-1">
           <span className="text-[11px] font-mono uppercase tracking-wider text-rose-400 block font-semibold">
             Historically Rejected Because:
           </span>
@@ -94,7 +94,7 @@ export function PriorArtWarningCard({
 
       {/* Reconsider If / Conditions */}
       {item.reconsiderIf && (
-        <div className="rounded bg-emerald-950/20 border border-emerald-800/40 p-3.5 space-y-1">
+        <div className="rounded bg-emerald-950/20 border border-emerald-800/30 p-3.5 space-y-1">
           <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 block font-semibold">
             Reconsideration Conditions (Reopen Radar):
           </span>
@@ -112,7 +112,7 @@ export function PriorArtWarningCard({
             {affectedFiles.map((file, idx) => (
               <span
                 key={idx}
-                className="font-mono text-xs bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-cyan-300"
+                className="font-mono text-xs bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-slate-300"
               >
                 {file}
               </span>
@@ -139,7 +139,7 @@ export function PriorArtWarningCard({
             href={item.decision.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-mono text-slate-400 hover:text-emerald-400 inline-flex items-center gap-1.5 transition-colors"
+            className="text-xs text-slate-400 hover:text-emerald-400 inline-flex items-center gap-1.5 transition-colors"
           >
             <span>Read discussion thread ({item.decision.sourceTitle})</span>
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

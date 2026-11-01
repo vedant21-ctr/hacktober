@@ -1,16 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Repository, RadarItem, Condition } from '@decisionvault/shared/api';
+import type { Repository, RadarItem } from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../lib/api';
-import {
-  PageTitle,
-  StatusBadge,
-  EmptyState,
-  ErrorDisplay,
-  FeatureNotice,
-  SkeletonCard,
-} from '../components/ui';
+import { PageTitle, EmptyState, ErrorDisplay, FeatureNotice, SkeletonCard } from '../components/ui';
 
 export default function ReopenRadarPage() {
   const [repos, setRepos] = useState<Repository[]>([]);
@@ -45,7 +38,6 @@ export default function ReopenRadarPage() {
     setApiNotice(false);
 
     try {
-      // Attempt GET /api/radar?repoId=&state=
       try {
         const res = await api.getRadar(repoId, stateFilter !== 'all' ? stateFilter : undefined);
         setRadarItems(res.items);
@@ -53,7 +45,6 @@ export default function ReopenRadarPage() {
         if (radarErr instanceof ApiClientError && radarErr.status === 501) {
           setApiNotice(true);
         }
-        // Fallback: Read conditions and health directly from decisions
         await buildRadarFromDecisions(repoId);
       }
     } catch (err) {
@@ -120,7 +111,7 @@ export default function ReopenRadarPage() {
   function getHealthStateBadge(health: RadarItem['health']) {
     if (!health) {
       return (
-        <span className="rounded bg-vault-border/60 border border-vault-border px-2 py-0.5 text-[9px] font-mono font-bold text-vault-text-dim uppercase">
+        <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-0.5 text-[11px] font-medium text-slate-400">
           ○ Unknown / Pending Probe
         </span>
       );
@@ -129,20 +120,20 @@ export default function ReopenRadarPage() {
     switch (health.state) {
       case 'holds':
         return (
-          <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-mono font-bold text-emerald-400 uppercase">
+          <span className="rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
             ✓ Condition Holds
           </span>
         );
       case 'may_not_hold':
         return (
-          <span className="rounded bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 text-[9px] font-mono font-bold text-rose-400 uppercase">
+          <span className="rounded-md bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 text-[11px] font-medium text-rose-400">
             ✕ Condition May Not Hold — Review Needed
           </span>
         );
       case 'unknown':
       default:
         return (
-          <span className="rounded bg-vault-border/60 border border-vault-border px-2 py-0.5 text-[9px] font-mono font-bold text-vault-text-dim uppercase">
+          <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-0.5 text-[11px] font-medium text-slate-400">
             ○ Unknown State
           </span>
         );
@@ -150,7 +141,7 @@ export default function ReopenRadarPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl">
+    <div className="space-y-6 max-w-5xl">
       <PageTitle
         title="Reopen Radar"
         subtitle="Engineering Condition Monitoring — Detect historical decisions whose operational assumptions or technical conditions may require reconsideration."
@@ -159,7 +150,7 @@ export default function ReopenRadarPage() {
             <select
               value={selectedRepoId || ''}
               onChange={(e) => setSelectedRepoId(Number(e.target.value))}
-              className="rounded-md border border-vault-border bg-vault-surface px-3 py-1.5 text-xs text-vault-text font-mono focus-vault"
+              className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
             >
               {repos.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -170,7 +161,7 @@ export default function ReopenRadarPage() {
             <select
               value={stateFilter}
               onChange={(e) => setStateFilter(e.target.value)}
-              className="rounded-md border border-vault-border bg-vault-surface px-3 py-1.5 text-xs text-vault-text font-mono focus-vault"
+              className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
             >
               <option value="all">All Condition States</option>
               <option value="may_not_hold">May Not Hold Only</option>
@@ -181,7 +172,7 @@ export default function ReopenRadarPage() {
               type="button"
               onClick={handleRecheck}
               disabled={isRechecking || !selectedRepoId}
-              className="rounded-md bg-vault-accent/10 border border-vault-accent/30 px-3 py-1.5 text-xs font-mono text-vault-accent hover:bg-vault-accent/20 transition-colors disabled:opacity-30 whitespace-nowrap"
+              className="rounded-md bg-emerald-600/10 border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-600/20 transition-colors disabled:opacity-30 whitespace-nowrap"
             >
               {isRechecking ? 'Probing...' : '↺ Probe Conditions'}
             </button>
@@ -197,14 +188,14 @@ export default function ReopenRadarPage() {
       )}
 
       {recheckSuccess && (
-        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-400 font-mono">
+        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400">
           ✓ {recheckSuccess}
         </div>
       )}
 
       {error && <ErrorDisplay title="Radar Error" message={error} />}
 
-      {/* ── Radar Items ────────────────────────────────────────────────────── */}
+      {/* Radar Items */}
       {loading ? (
         <div className="space-y-4 py-6">
           {[...Array(3)].map((_, i) => (
@@ -216,21 +207,21 @@ export default function ReopenRadarPage() {
           {radarItems.map((item, idx) => (
             <div
               key={idx}
-              className="rounded-lg border border-vault-border bg-vault-surface/30 p-5 space-y-4 hover:border-vault-border-bright transition-all"
+              className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-5 space-y-4 hover:border-slate-700 transition-colors"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     {getHealthStateBadge(item.health)}
-                    <span className="text-[10px] font-mono text-vault-text-dim">
+                    <span className="text-xs text-slate-400">
                       Alternative:{' '}
-                      <strong className="text-vault-text">{item.alternativeName}</strong>
+                      <strong className="text-slate-200">{item.alternativeName}</strong>
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold font-mono text-vault-text">
+                  <h3 className="text-base font-semibold text-slate-100">
                     <a
                       href={`/decisions/${item.decisionId}`}
-                      className="hover:text-vault-accent underline decoration-vault-border"
+                      className="hover:text-emerald-300 transition-colors"
                     >
                       {item.title}
                     </a>
@@ -238,35 +229,35 @@ export default function ReopenRadarPage() {
                 </div>
                 <a
                   href={`/decisions/${item.decisionId}`}
-                  className="rounded border border-vault-border bg-vault-surface px-2.5 py-1 text-[10px] font-mono text-vault-text-muted hover:text-vault-accent transition-colors"
+                  className="rounded border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs text-slate-300 hover:text-emerald-300 transition-colors font-mono"
                 >
                   Decision #{item.decisionId} →
                 </a>
               </div>
 
               {/* Condition Details */}
-              <div className="rounded border border-vault-border/60 bg-vault-bg/60 p-3.5 space-y-2 text-xs font-mono">
-                <div className="flex items-center justify-between text-vault-text-dim text-[10px]">
-                  <span>Condition Assumption:</span>
-                  <span>
-                    Kind: <code className="text-vault-accent">{item.condition.kind}</code> | Probe:{' '}
-                    <code className="text-vault-steel">{item.condition.probe}</code>
+              <div className="rounded-md border border-slate-800 bg-[#080c14]/80 p-3.5 space-y-2 text-xs">
+                <div className="flex items-center justify-between text-slate-400 text-xs">
+                  <span className="font-medium">Condition Assumption:</span>
+                  <span className="font-mono text-[11px]">
+                    Kind: <code className="text-emerald-400">{item.condition.kind}</code> | Probe:{' '}
+                    <code className="text-slate-300">{item.condition.probe}</code>
                   </span>
                 </div>
-                <div className="text-vault-text font-sans font-medium text-xs leading-relaxed">
+                <div className="text-slate-200 font-medium text-xs leading-relaxed">
                   &ldquo;{item.condition.text}&rdquo;
                 </div>
                 {item.condition.probeValue && (
-                  <div className="text-[10px] text-vault-text-dim">
+                  <div className="text-xs text-slate-400 font-mono">
                     Assumed Value:{' '}
-                    <code className="text-vault-text">{item.condition.probeValue}</code>
+                    <code className="text-slate-200">{item.condition.probeValue}</code>
                   </div>
                 )}
               </div>
 
               {/* Health Interpretation */}
               {item.health && (
-                <div className="flex items-center justify-between text-[10px] font-mono text-vault-text-dim pt-1 border-t border-vault-border/40">
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-slate-800/60">
                   <div>
                     {item.health.interpretation ? (
                       <span>Interpretation: {item.health.interpretation}</span>
@@ -274,7 +265,9 @@ export default function ReopenRadarPage() {
                       <span>Signal Value: {item.health.signalValue || 'Normal'}</span>
                     )}
                   </div>
-                  <span>Checked: {new Date(item.health.checkedAt).toLocaleDateString()}</span>
+                  <span className="font-mono text-[11px]">
+                    Checked: {new Date(item.health.checkedAt).toLocaleDateString()}
+                  </span>
                 </div>
               )}
             </div>

@@ -168,31 +168,35 @@ export default function ImportPage() {
   }
 
   return (
-    <div className="py-8 max-w-4xl mx-auto space-y-8">
+    <div className="py-4 max-w-4xl mx-auto space-y-6">
       {/* Header and Status */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/80 pb-5">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 mb-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div className="inline-flex items-center gap-2 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 mb-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
             Phase 3A: Live GitHub Ingestion
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-100">Repository Ingestion</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Repository Ingestion</h1>
+          <p className="mt-1 text-xs text-slate-400">
             Import issues, pull requests, and discussion threads from any public GitHub repository.
           </p>
         </div>
 
         {/* System Badges */}
-        <div className="flex items-center gap-3">
-          <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-xs font-mono">
-            <span className="text-slate-500">DB: </span>
-            <span className={statusInfo?.db ? 'text-emerald-400' : 'text-amber-400'}>
-              {statusInfo?.db ? 'CONNECTED' : 'STANDALONE'}
+        <div className="flex items-center gap-2.5 text-xs">
+          <div className="rounded-md border border-slate-800 bg-[#0e1424]/80 px-2.5 py-1 text-slate-400">
+            <span>DB: </span>
+            <span
+              className={
+                statusInfo?.db ? 'text-emerald-400 font-medium' : 'text-amber-400 font-medium'
+              }
+            >
+              {statusInfo?.db ? 'Connected' : 'Standalone'}
             </span>
           </div>
-          <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-xs font-mono">
-            <span className="text-slate-500">LLM: </span>
-            <span className="text-slate-300">
+          <div className="rounded-md border border-slate-800 bg-[#0e1424]/80 px-2.5 py-1 text-slate-400 font-mono text-[11px]">
+            <span>LLM: </span>
+            <span className="text-slate-200">
               {statusInfo?.ollama?.model || 'gemma4:e4b'} ({statusInfo?.ollama?.mode || 'replay'})
             </span>
           </div>
@@ -200,18 +204,19 @@ export default function ImportPage() {
       </div>
 
       {/* Import Form */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6 shadow-sm">
+      <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6 shadow-sm">
         <h2 className="text-base font-semibold text-slate-200 mb-1">Import a Public Repository</h2>
-        <p className="text-xs text-slate-400 mb-6">
-          Provide a GitHub repository identifier (e.g., <code>python/cpython</code> or{' '}
-          <code>https://github.com/facebook/react</code>). Outbound requests are strictly limited to
-          official GitHub APIs.
+        <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+          Provide a GitHub repository identifier (e.g.,{' '}
+          <code className="font-mono text-slate-300">python/cpython</code> or{' '}
+          <code className="font-mono text-slate-300">https://github.com/facebook/react</code>).
+          Outbound requests are strictly limited to official GitHub APIs.
         </p>
 
         <form onSubmit={handleImport} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="sm:col-span-3">
-              <label htmlFor="target" className="block text-xs font-medium text-slate-300 mb-1">
+              <label htmlFor="target" className="block text-xs font-medium text-slate-300 mb-1.5">
                 Repository (owner/repo or URL)
               </label>
               <input
@@ -220,13 +225,13 @@ export default function ImportPage() {
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
                 placeholder="e.g. facebook/react or https://github.com/facebook/react"
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:border-emerald-500/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/40 font-mono"
                 disabled={isSubmitting || currentJob?.status === 'running'}
               />
             </div>
 
             <div>
-              <label htmlFor="limit" className="block text-xs font-medium text-slate-300 mb-1">
+              <label htmlFor="limit" className="block text-xs font-medium text-slate-300 mb-1.5">
                 Max Issues/PRs
               </label>
               <input
@@ -236,14 +241,14 @@ export default function ImportPage() {
                 max="100"
                 value={limit}
                 onChange={(e) => setLimit(parseInt(e.target.value, 10) || 20)}
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:border-emerald-500/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/40 font-mono"
                 disabled={isSubmitting || currentJob?.status === 'running'}
               />
             </div>
           </div>
 
           {formError && (
-            <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+            <div className="rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
               <span className="font-semibold">Import Error: </span>
               {formError}
             </div>
@@ -260,7 +265,7 @@ export default function ImportPage() {
             <button
               type="submit"
               disabled={isSubmitting || currentJob?.status === 'running' || !target.trim()}
-              className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {isSubmitting
                 ? 'Initiating Import...'
@@ -273,20 +278,20 @@ export default function ImportPage() {
 
         {/* Live Progress Card */}
         {currentJob && currentJob.status === 'running' && (
-          <div className="mt-6 rounded-md border border-emerald-500/30 bg-slate-950/80 p-4 space-y-3">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-emerald-400 font-semibold flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <div className="mt-5 rounded-md border border-emerald-500/30 bg-[#080c14]/90 p-4 space-y-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-emerald-400 font-medium flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 Job #{currentJob.id} — Stage: {currentJob.stage.toUpperCase()}
               </span>
-              <span className="text-slate-400">
+              <span className="text-slate-400 font-mono text-[11px]">
                 Progress: {currentJob.progress.done} / {currentJob.progress.total}
               </span>
             </div>
 
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-emerald-500 h-2 transition-all duration-300"
+                className="bg-emerald-500 h-1.5 transition-all duration-300"
                 style={{
                   width: `${
                     currentJob.progress.total > 0
@@ -304,67 +309,71 @@ export default function ImportPage() {
       </div>
 
       {/* Imported Repositories List */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6">
+      <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-base font-semibold text-slate-200">Imported Repositories</h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 mt-0.5">
               Live SQLite database entries stored via verified GitHub ingestion.
             </p>
           </div>
           <button
             onClick={fetchRepositories}
-            className="text-xs font-mono text-emerald-400 hover:text-emerald-300"
+            className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
           >
-            [Refresh]
+            Refresh
           </button>
         </div>
 
         {loadingRepos ? (
-          <div className="text-center py-8 text-xs text-slate-500 font-mono">
+          <div className="text-center py-8 text-xs text-slate-500">
             Loading imported repositories...
           </div>
         ) : repositories.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-800 p-8 text-center">
-            <p className="text-sm text-slate-400">No repositories have been imported yet.</p>
-            <p className="text-xs text-slate-600 mt-1">
+          <div className="rounded-md border border-dashed border-slate-800/80 p-8 text-center bg-[#080c14]/40">
+            <p className="text-xs font-medium text-slate-300">
+              No repositories have been imported yet.
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
               Submit a public GitHub repository above to populate real discussion data.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-800/80">
+          <div className="divide-y divide-slate-800/70">
             {repositories.map((repo) => (
               <div
                 key={repo.id}
-                className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold text-slate-200">
-                      {repo.fullName}
-                    </span>
-                    <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 text-[10px] font-mono text-emerald-400">
+                    <span className="font-semibold text-sm text-slate-100">{repo.fullName}</span>
+                    <span className="rounded bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.5 text-[10px] font-mono text-emerald-400">
                       LIVE DATA
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1 font-mono">
-                    Branch: {repo.defaultBranch || 'main'} • Imported:{' '}
-                    {new Date(repo.importedAt).toLocaleString()}
+                  <div className="text-xs text-slate-400 mt-1">
+                    Branch:{' '}
+                    <code className="font-mono text-slate-300">{repo.defaultBranch || 'main'}</code>{' '}
+                    • Imported:{' '}
+                    <span className="font-mono text-[11px]">
+                      {new Date(repo.importedAt).toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500 font-mono">Repo #{repo.id}</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs font-mono text-slate-500">Repo #{repo.id}</span>
                   <button
                     onClick={() => handleExtract(repo.id)}
                     disabled={Boolean(currentJob && currentJob.status === 'running')}
-                    className="rounded bg-emerald-600/80 hover:bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition disabled:opacity-50"
+                    className="rounded-md bg-emerald-600/90 hover:bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-50"
                   >
                     Extract Decisions
                   </button>
                   <a
                     href={`/decisions?repoId=${repo.id}`}
-                    className="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition"
+                    className="rounded-md bg-slate-900 border border-slate-800 hover:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-slate-100 transition-colors"
                   >
                     View Decisions →
                   </a>

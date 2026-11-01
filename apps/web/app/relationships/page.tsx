@@ -1,12 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type {
-  Repository,
-  DecisionCard,
-  DecisionDetail,
-  RelationshipItem,
-} from '@decisionvault/shared/api';
+import type { Repository } from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../lib/api';
 import {
   PageTitle,
@@ -69,7 +64,6 @@ export default function DecisionRelationshipsPage() {
       for (const dec of decisionsData.items) {
         let relationsList: DecisionGraphNode['relations'] = [];
 
-        // Attempt GET /api/relationships?decisionId=
         try {
           const relRes = await api.getRelationships(dec.id);
           relationsList = relRes.items.map((item) => ({
@@ -81,7 +75,6 @@ export default function DecisionRelationshipsPage() {
           if (relErr instanceof ApiClientError && relErr.status === 501) {
             setApiNotice(true);
           }
-          // Fallback: Read relationships defined in DecisionDetail
           try {
             const detail = await api.getDecisionDetail(dec.id);
             relationsList = detail.relationships.map((r) => ({
@@ -115,26 +108,26 @@ export default function DecisionRelationshipsPage() {
     switch (type) {
       case 'supersedes':
         return (
-          <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-mono font-bold text-emerald-400 uppercase">
+          <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 text-[10px] font-mono font-medium text-emerald-400 uppercase">
             Supersedes
           </span>
         );
       case 'contradicts':
         return (
-          <span className="rounded bg-rose-500/10 border border-rose-500/30 px-1.5 py-0.5 text-[9px] font-mono font-bold text-rose-400 uppercase">
+          <span className="rounded bg-rose-500/10 border border-rose-500/30 px-1.5 py-0.5 text-[10px] font-mono font-medium text-rose-400 uppercase">
             Contradicts
           </span>
         );
       case 'revisits':
         return (
-          <span className="rounded bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-mono font-bold text-amber-400 uppercase">
+          <span className="rounded bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-mono font-medium text-amber-400 uppercase">
             Revisits
           </span>
         );
       case 'supports':
       default:
         return (
-          <span className="rounded bg-sky-500/10 border border-sky-500/30 px-1.5 py-0.5 text-[9px] font-mono font-bold text-sky-400 uppercase">
+          <span className="rounded bg-sky-500/10 border border-sky-500/30 px-1.5 py-0.5 text-[10px] font-mono font-medium text-sky-400 uppercase">
             Supports
           </span>
         );
@@ -147,7 +140,7 @@ export default function DecisionRelationshipsPage() {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-6xl">
+    <div className="space-y-6 max-w-6xl">
       <PageTitle
         title="Decision Relationships"
         subtitle="Graph &amp; Dependency Intelligence — Trace connections, superseding decisions, and potential architectural conflicts."
@@ -156,7 +149,7 @@ export default function DecisionRelationshipsPage() {
             <select
               value={selectedRepoId || ''}
               onChange={(e) => setSelectedRepoId(Number(e.target.value))}
-              className="rounded-md border border-vault-border bg-vault-surface px-3 py-1.5 text-xs text-vault-text font-mono focus-vault"
+              className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
             >
               {repos.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -167,7 +160,7 @@ export default function DecisionRelationshipsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="rounded-md border border-vault-border bg-vault-surface px-3 py-1.5 text-xs text-vault-text font-mono focus-vault"
+              className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
             >
               <option value="all">All Relations ({nodes.length})</option>
               <option value="supersedes">Supersedes</option>
@@ -188,11 +181,11 @@ export default function DecisionRelationshipsPage() {
 
       {error && <ErrorDisplay title="Relationship Graph Error" message={error} />}
 
-      {/* ── Main Graph / Matrix Layout ─────────────────────────────────────── */}
+      {/* Main Graph / Matrix Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Nodes Grid */}
         <div className="lg:col-span-7 space-y-3">
-          <div className="text-[9px] font-mono uppercase tracking-widest text-vault-text-dim">
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
             Decision Nodes ({filteredNodes.length})
           </div>
 
@@ -213,23 +206,23 @@ export default function DecisionRelationshipsPage() {
                     onClick={() => setSelectedNode(node)}
                     className={`w-full text-left p-4 rounded-lg border transition-all ${
                       isSelected
-                        ? 'border-vault-accent/50 bg-vault-accent/10 shadow-lg'
-                        : 'border-vault-border bg-vault-surface/30 hover:border-vault-border-bright'
+                        ? 'border-emerald-500/40 bg-emerald-500/10 shadow-sm'
+                        : 'border-slate-800/80 bg-[#0e1424]/75 hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-vault-accent">
+                        <span className="font-mono text-xs font-semibold text-emerald-400">
                           #{node.id}
                         </span>
                         <StatusBadge status={node.status} />
                       </div>
-                      <span className="text-[10px] font-mono text-vault-text-dim">
+                      <span className="text-xs font-mono text-slate-400">
                         {node.relations.length} connection{node.relations.length !== 1 ? 's' : ''}
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold font-mono text-vault-text mb-2 line-clamp-1">
+                    <h3 className="text-sm font-semibold text-slate-100 mb-2 line-clamp-1">
                       {node.title}
                     </h3>
 
@@ -237,13 +230,13 @@ export default function DecisionRelationshipsPage() {
                       {node.relations.map((rel, rIdx) => (
                         <span key={rIdx} className="flex items-center gap-1">
                           {getRelationBadge(rel.type)}
-                          <span className="text-[9px] font-mono text-vault-text-dim">
+                          <span className="text-[10px] font-mono text-slate-400">
                             → #{rel.targetId}
                           </span>
                         </span>
                       ))}
                       {node.relations.length === 0 && (
-                        <span className="text-[9px] font-mono text-vault-text-dim italic">
+                        <span className="text-xs text-slate-500 italic">
                           Isolated architectural record
                         </span>
                       )}
@@ -264,12 +257,12 @@ export default function DecisionRelationshipsPage() {
         {/* Selected Node Details & Connected Edges */}
         <div className="lg:col-span-5">
           {selectedNode ? (
-            <div className="rounded-lg border border-vault-border bg-vault-surface/30 p-5 space-y-5 sticky top-6">
+            <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-5 space-y-5 sticky top-6">
               <div>
-                <div className="text-[9px] font-mono uppercase tracking-widest text-vault-text-dim mb-1">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 mb-1">
                   Selected Node
                 </div>
-                <h2 className="text-base font-bold font-mono text-vault-text">
+                <h2 className="text-base font-semibold text-slate-100">
                   #{selectedNode.id}: {selectedNode.title}
                 </h2>
                 <div className="flex items-center gap-2 mt-2">
@@ -279,7 +272,7 @@ export default function DecisionRelationshipsPage() {
               </div>
 
               <div>
-                <div className="text-[10px] font-mono uppercase tracking-wider text-vault-text-dim mb-2">
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 font-mono">
                   Connected Decisions ({selectedNode.relations.length})
                 </div>
 
@@ -288,41 +281,41 @@ export default function DecisionRelationshipsPage() {
                     {selectedNode.relations.map((rel, idx) => (
                       <div
                         key={idx}
-                        className="p-3 rounded border border-vault-border/60 bg-vault-bg/60 text-xs font-mono space-y-1.5"
+                        className="p-3 rounded-md border border-slate-800 bg-[#080c14]/80 text-xs space-y-1"
                       >
                         <div className="flex items-center justify-between">
                           {getRelationBadge(rel.type)}
                           <a
                             href={`/decisions/${rel.targetId}`}
-                            className="text-vault-accent hover:underline text-[10px]"
+                            className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium text-[11px]"
                           >
                             Inspect #{rel.targetId} →
                           </a>
                         </div>
-                        <div className="text-vault-text font-semibold">
+                        <div className="text-slate-200 font-medium pt-0.5">
                           {rel.targetTitle || `Decision Record #${rel.targetId}`}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 rounded border border-vault-border/40 bg-vault-bg/40 text-center text-xs font-mono text-vault-text-dim">
+                  <div className="p-4 rounded-md border border-slate-800 bg-[#080c14]/50 text-center text-xs text-slate-500">
                     No explicit relationships declared for this decision.
                   </div>
                 )}
               </div>
 
-              <div className="pt-3 border-t border-vault-border">
+              <div className="pt-3 border-t border-slate-800/70">
                 <a
                   href={`/decisions/${selectedNode.id}`}
-                  className="w-full block text-center rounded-md bg-vault-surface border border-vault-border hover:bg-vault-border py-2 text-xs font-mono text-vault-text transition-colors"
+                  className="w-full block text-center rounded-md bg-slate-900 border border-slate-800 hover:border-slate-700 py-2 text-xs font-medium text-slate-200 hover:text-white transition-colors"
                 >
                   View Full Decision Details →
                 </a>
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-vault-border bg-vault-surface/20 p-8 text-center text-vault-text-dim font-mono text-xs">
+            <div className="rounded-lg border border-slate-800 bg-[#0e1424]/40 p-8 text-center text-slate-500 text-xs">
               Select a decision node to view its connection graph
             </div>
           )}

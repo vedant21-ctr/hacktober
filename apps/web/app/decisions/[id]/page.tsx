@@ -63,12 +63,12 @@ export default function DecisionDetailPage() {
   }, [decisionId]);
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-6 max-w-5xl">
       {/* Back link */}
       <div>
         <Link
           href="/decisions"
-          className="text-xs font-mono text-slate-400 hover:text-emerald-400 inline-flex items-center gap-1.5 transition-colors"
+          className="text-xs text-slate-400 hover:text-emerald-400 inline-flex items-center gap-1.5 transition-colors font-medium"
         >
           ← Back to Decision Explorer
         </Link>
@@ -76,11 +76,11 @@ export default function DecisionDetailPage() {
 
       {/* Prominent Sample Fixture Disclaimer Banner */}
       {isFixturePreview && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-5 font-mono text-xs text-amber-200 space-y-2">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 space-y-2">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-amber-300">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
-              SAMPLE CONTRACT FIXTURE (PREVIEW ONLY — NOT LIVE DATA)
+            <div className="flex items-center gap-2 font-semibold uppercase tracking-wider text-amber-300 text-[11px]">
+              <span className="h-2 w-2 rounded-full bg-amber-400"></span>
+              Sample Contract Fixture (Preview Mode — Not Live Data)
             </div>
             <button
               onClick={() => {
@@ -88,12 +88,12 @@ export default function DecisionDetailPage() {
                 setIsFixturePreview(false);
                 loadDecision(false);
               }}
-              className="text-[11px] text-amber-300 hover:text-amber-100 underline"
+              className="text-[11px] text-amber-300 hover:text-amber-100 underline transition-colors"
             >
               Exit preview &amp; check live backend
             </button>
           </div>
-          <p className="text-[11px] text-amber-200/90 leading-relaxed font-sans">
+          <p className="text-[11px] text-amber-200/80 leading-relaxed font-sans">
             The backend endpoint{' '}
             <code className="text-amber-300 font-mono">GET /api/decisions/:id</code> returned{' '}
             <strong>HTTP 501 (Not Implemented)</strong>. The decision, alternatives, quotes, and
@@ -131,10 +131,10 @@ export default function DecisionDetailPage() {
 
       {/* Hero Content */}
       {decision && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Header Card */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+          <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60 pb-4">
               <div className="flex items-center gap-2 flex-wrap">
                 <StatusBadge status={decision.status} />
                 <Badge variant={decision.lifecycle === 'active' ? 'active' : 'superseded'}>
@@ -153,7 +153,7 @@ export default function DecisionDetailPage() {
                   href={decision.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 font-mono transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
                 >
                   <span>Discussion Source</span>
                   <svg
@@ -174,8 +174,8 @@ export default function DecisionDetailPage() {
             </div>
 
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-100">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100">
                   {decision.title}
                 </h1>
                 {isFixturePreview && (
@@ -189,9 +189,9 @@ export default function DecisionDetailPage() {
               </p>
             </div>
 
-            <div className="text-xs font-mono text-slate-500 flex items-center gap-2">
-              <span>Source Thread:</span>
-              <span className="text-slate-300">{decision.sourceTitle}</span>
+            <div className="text-xs text-slate-400 flex items-center gap-2 pt-1 border-t border-slate-800/60">
+              <span className="text-slate-500">Source Thread:</span>
+              <span className="text-slate-300 font-medium">{decision.sourceTitle}</span>
             </div>
           </div>
 
@@ -204,7 +204,7 @@ export default function DecisionDetailPage() {
 
           {/* Section 1: Decision Evidence */}
           {decision.decisionEvidence && decision.decisionEvidence.length > 0 && (
-            <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6 space-y-4">
+            <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6 space-y-4">
               <EvidenceLedger
                 evidenceList={decision.decisionEvidence}
                 title="Accepted Decision Evidence"
@@ -214,8 +214,8 @@ export default function DecisionDetailPage() {
           )}
 
           {/* Section 2: Accepted vs Rejected Alternatives */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
               <h3 className="text-base font-bold text-slate-100">
                 Alternatives &amp; Rejection Analysis
               </h3>
@@ -232,20 +232,20 @@ export default function DecisionDetailPage() {
           </div>
 
           {/* Section 3: Code Connections */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6 space-y-4">
+          <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6 space-y-4">
             <CodeConnections files={decision.files} isSampleData={isFixturePreview} />
           </div>
 
           {/* Section 4: Timeline & Events */}
           {decision.events && decision.events.length > 0 && (
-            <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6 space-y-4">
+            <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6 space-y-4">
               <TimelineTrail events={decision.events} />
             </div>
           )}
 
           {/* Section 5: Relationships */}
           {decision.relationships && decision.relationships.length > 0 && (
-            <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6 space-y-4">
+            <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6 space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
                 Related Historical Decisions ({decision.relationships.length})
               </h4>
@@ -253,15 +253,17 @@ export default function DecisionDetailPage() {
                 {decision.relationships.map((rel, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 rounded border border-slate-800 bg-slate-950 font-mono text-xs"
+                    className="flex items-center justify-between p-3 rounded-md border border-slate-800 bg-[#080c14]/80 text-xs"
                   >
                     <div className="flex items-center gap-2">
                       <Badge variant="tech">{rel.type}</Badge>
-                      <span className="text-slate-300">Target Decision #{rel.otherId}</span>
+                      <span className="text-slate-300 font-mono">
+                        Target Decision #{rel.otherId}
+                      </span>
                     </div>
                     <Link
                       href={`/decisions/${rel.otherId}`}
-                      className="text-emerald-400 hover:text-emerald-300"
+                      className="text-emerald-400 hover:text-emerald-300 font-medium"
                     >
                       Inspect →
                     </Link>

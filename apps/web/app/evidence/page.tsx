@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Repository, DecisionCard, DecisionDetail, Evidence } from '@decisionvault/shared/api';
+import type { Repository, Evidence } from '@decisionvault/shared/api';
 import { api } from '../lib/api';
 import { PageTitle, EvidenceChip, EmptyState, ErrorDisplay, SkeletonCard } from '../components/ui';
 
@@ -52,12 +52,10 @@ export default function EvidenceArchivePage() {
 
       const accumulated: EvidenceWithContext[] = [];
 
-      // Fetch details for each decision to extract all supporting evidence
       const detailPromises = decisionsData.items.map((dec) =>
         api
           .getDecisionDetail(dec.id)
           .then((detail) => {
-            // 1. Direct decision evidence
             detail.decisionEvidence.forEach((ev) => {
               accumulated.push({
                 ...ev,
@@ -66,7 +64,6 @@ export default function EvidenceArchivePage() {
               });
             });
 
-            // 2. Alternative evidence
             detail.alternatives.forEach((alt) => {
               alt.evidence.forEach((ev) => {
                 accumulated.push({
@@ -108,34 +105,32 @@ export default function EvidenceArchivePage() {
   const unverifiedCount = evidenceList.filter((e) => !e.verified).length;
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-6xl">
+    <div className="space-y-6 max-w-6xl">
       <PageTitle
         title="Evidence Archive"
         subtitle="Forensic evidence lock verification — trace every reconstructed decision claim back to verified GitHub discussion quotes."
         badge={`${evidenceList.length} EXTRACTED CITATIONS`}
         actions={
           <div className="flex items-center gap-2">
-            <span className="rounded bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[10px] font-mono text-emerald-400">
+            <span className="rounded-md bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 text-xs font-mono text-emerald-400 font-medium">
               ✓ {verifiedCount} Verified
             </span>
-            <span className="rounded bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-[10px] font-mono text-amber-400">
+            <span className="rounded-md bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 text-xs font-mono text-amber-400 font-medium">
               ○ {unverifiedCount} Unverified
             </span>
           </div>
         }
       />
 
-      {/* ── Filters Bar ────────────────────────────────────────────────────── */}
-      <div className="rounded-lg border border-vault-border bg-vault-surface/30 p-4">
+      {/* Filters Bar */}
+      <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-4">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
-            <label className="block text-[9px] font-mono uppercase tracking-wider text-vault-text-dim mb-1.5">
-              Repository
-            </label>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">Repository</label>
             <select
               value={selectedRepoId}
               onChange={(e) => setSelectedRepoId(e.target.value)}
-              className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
             >
               <option value="">All Repositories</option>
               {repos.map((r) => (
@@ -147,13 +142,13 @@ export default function EvidenceArchivePage() {
           </div>
 
           <div>
-            <label className="block text-[9px] font-mono uppercase tracking-wider text-vault-text-dim mb-1.5">
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">
               Evidence Status
             </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-              className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
             >
               <option value="all">All Evidence ({evidenceList.length})</option>
               <option value="verified">Verified Exact &amp; Approx ({verifiedCount})</option>
@@ -162,13 +157,11 @@ export default function EvidenceArchivePage() {
           </div>
 
           <div>
-            <label className="block text-[9px] font-mono uppercase tracking-wider text-vault-text-dim mb-1.5">
-              Claim Type
-            </label>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">Claim Type</label>
             <select
               value={claimFilter}
               onChange={(e) => setClaimFilter(e.target.value)}
-              className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
             >
               <option value="">All Claim Types</option>
               <option value="decision">Decision</option>
@@ -180,7 +173,7 @@ export default function EvidenceArchivePage() {
           </div>
 
           <div>
-            <label className="block text-[9px] font-mono uppercase tracking-wider text-vault-text-dim mb-1.5">
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">
               Search Quotes / Author
             </label>
             <input
@@ -188,7 +181,7 @@ export default function EvidenceArchivePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Filter by quote keywords..."
-              className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault placeholder-vault-text-dim"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/80"
             />
           </div>
         </div>
@@ -198,7 +191,7 @@ export default function EvidenceArchivePage() {
         <ErrorDisplay title="Evidence Loading Error" message={error} onRetry={loadAllEvidence} />
       )}
 
-      {/* ── Loading Skeleton ───────────────────────────────────────────────── */}
+      {/* Loading Skeleton */}
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
@@ -207,24 +200,24 @@ export default function EvidenceArchivePage() {
         </div>
       )}
 
-      {/* ── Evidence Cards Grid ────────────────────────────────────────────── */}
+      {/* Evidence Cards Grid */}
       {!loading && filteredEvidence.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredEvidence.map((ev) => (
             <div
               key={ev.id}
-              className={`rounded-lg border p-4 transition-all flex flex-col justify-between ${
+              className={`rounded-lg border p-5 transition-colors flex flex-col justify-between ${
                 ev.verified
-                  ? 'border-vault-border bg-vault-surface/30 hover:border-emerald-500/30'
-                  : 'border-amber-500/20 bg-amber-500/5'
+                  ? 'border-slate-800/80 bg-[#0e1424]/75 hover:border-slate-700'
+                  : 'border-amber-500/20 bg-[#0e1424]/50'
               }`}
             >
               <div>
                 {/* Header */}
-                <div className="flex items-center justify-between gap-2 mb-2.5">
+                <div className="flex items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2">
                     <EvidenceChip verified={ev.verified} method={ev.method} score={ev.score} />
-                    <span className="rounded bg-vault-surface border border-vault-border px-1.5 py-0.5 text-[9px] font-mono uppercase text-vault-text-dim">
+                    <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono uppercase text-slate-400">
                       {ev.claimType}
                     </span>
                   </div>
@@ -232,23 +225,24 @@ export default function EvidenceArchivePage() {
                     href={ev.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[10px] font-mono text-vault-accent hover:underline flex items-center gap-1"
+                    className="text-xs text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 font-medium"
                   >
                     GitHub ↗
                   </a>
                 </div>
 
                 {/* Quote */}
-                <blockquote className="italic text-xs text-vault-text font-sans leading-relaxed border-l-2 border-vault-border pl-3 my-2 text-vault-text/90">
+                <blockquote className="italic text-xs text-slate-200 leading-relaxed border-l-2 border-emerald-500/50 pl-3.5 my-2.5">
                   &ldquo;{ev.quote}&rdquo;
                 </blockquote>
               </div>
 
               {/* Footer Meta */}
-              <div className="mt-3 pt-3 border-t border-vault-border/50 text-[10px] font-mono text-vault-text-dim flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
+              <div className="mt-4 pt-3 border-t border-slate-800/60 text-xs text-slate-400 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between font-mono text-[11px]">
                   <span>
-                    Author: <span className="text-vault-text">{ev.author}</span> ({ev.role})
+                    Author: <span className="text-slate-200 font-medium">@{ev.author}</span> (
+                    {ev.role})
                   </span>
                   <span>{new Date(ev.at).toLocaleDateString()}</span>
                 </div>
@@ -257,13 +251,13 @@ export default function EvidenceArchivePage() {
                     Decision:{' '}
                     <a
                       href={`/decisions/${ev.decisionId}`}
-                      className="text-vault-text hover:text-vault-accent underline decoration-vault-border"
+                      className="text-slate-300 hover:text-emerald-300 transition-colors font-medium"
                     >
                       {ev.decisionTitle}
                     </a>
                   </span>
                   {ev.alternativeName && (
-                    <span className="text-vault-text-muted truncate max-w-[150px]">
+                    <span className="text-slate-400 truncate max-w-[150px] font-mono text-[11px]">
                       Alt: {ev.alternativeName}
                     </span>
                   )}
@@ -274,7 +268,7 @@ export default function EvidenceArchivePage() {
         </div>
       )}
 
-      {/* ── Empty State ───────────────────────────────────────────────────── */}
+      {/* Empty State */}
       {!loading && filteredEvidence.length === 0 && (
         <EmptyState
           icon="✓"

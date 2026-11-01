@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Repository, AskResponse, DecisionCard, Evidence } from '@decisionvault/shared/api';
+import type { Repository, AskResponse, DecisionCard } from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../lib/api';
 import {
   PageTitle,
   StatusBadge,
-  ConfidenceMeter,
   EvidenceChip,
-  EmptyState,
   ErrorDisplay,
   FeatureNotice,
 } from '../components/ui';
@@ -54,7 +52,6 @@ export default function AskDecisionVaultPage() {
     setRelatedDecisions([]);
 
     try {
-      // 1. Attempt official POST /api/ask
       try {
         const res = await api.ask({
           repoId: selectedRepoId,
@@ -65,7 +62,6 @@ export default function AskDecisionVaultPage() {
         if (askErr instanceof ApiClientError && askErr.status === 501) {
           setApiNotice(true);
         }
-        // Fallback: Perform grounded semantic retrieval against loaded repository decisions
         await runGroundedAnswerSynthesis(selectedRepoId, query.trim());
       }
     } catch (err) {
@@ -99,7 +95,6 @@ export default function AskDecisionVaultPage() {
     const topMatches = scoredDecisions.slice(0, 3).map((m) => m.decision);
     setRelatedDecisions(topMatches);
 
-    // Retrieve citations from details
     const citations: AskResponse['citations'] = [];
 
     for (const dec of topMatches) {
@@ -141,23 +136,23 @@ export default function AskDecisionVaultPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl">
+    <div className="space-y-6 max-w-4xl">
       <PageTitle
         title="Ask DecisionVault"
         subtitle="Grounded Engineering History Retrieval — Inquire why architectural choices were made with strict citations from verified discussions."
       />
 
       {/* Query Form */}
-      <div className="rounded-lg border border-vault-border bg-vault-surface/30 p-6 space-y-4">
+      <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-6 space-y-4">
         <form onSubmit={handleAsk} className="space-y-4">
           <div>
-            <label className="block text-[10px] font-mono text-vault-text-dim mb-1.5 uppercase tracking-wider">
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">
               Target Repository
             </label>
             <select
               value={selectedRepoId || ''}
               onChange={(e) => setSelectedRepoId(Number(e.target.value))}
-              className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault max-w-md"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80 max-w-md"
             >
               {repos.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -168,7 +163,7 @@ export default function AskDecisionVaultPage() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-mono text-vault-text-dim mb-1.5 uppercase tracking-wider">
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">
               Engineering Question
             </label>
             <div className="flex gap-2">
@@ -177,12 +172,12 @@ export default function AskDecisionVaultPage() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="Ask about architectural rationale, rejected alternatives, or file governance..."
-                className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2.5 text-xs text-vault-text font-mono focus-vault placeholder-vault-text-dim"
+                className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/80 leading-relaxed"
               />
               <button
                 type="submit"
                 disabled={isAsking || !question.trim()}
-                className="rounded-md bg-vault-accent/10 border border-vault-accent/30 px-5 py-2.5 text-xs font-semibold text-vault-accent hover:bg-vault-accent/20 transition-colors font-mono disabled:opacity-30 whitespace-nowrap flex items-center gap-2"
+                className="rounded-md bg-emerald-600 px-5 py-2.5 text-xs font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-30 whitespace-nowrap flex items-center gap-2 shadow-sm"
               >
                 {isAsking ? 'Retrieving...' : 'Ask Vault →'}
               </button>
@@ -192,7 +187,7 @@ export default function AskDecisionVaultPage() {
 
         {/* Example Questions */}
         <div>
-          <div className="text-[9px] font-mono uppercase tracking-widest text-vault-text-dim mb-2">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 mb-2">
             Suggested Engineering Inquiries
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -204,7 +199,7 @@ export default function AskDecisionVaultPage() {
                   setQuestion(q);
                   handleAsk(undefined, q);
                 }}
-                className="rounded border border-vault-border bg-vault-surface/40 hover:border-vault-accent hover:bg-vault-accent/5 px-2.5 py-1 text-[11px] font-mono text-vault-text-dim hover:text-vault-text transition-colors text-left"
+                className="rounded-md border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-900 px-2.5 py-1 text-xs text-slate-400 hover:text-slate-200 transition-colors text-left"
               >
                 &ldquo;{q}&rdquo;
               </button>
@@ -225,20 +220,20 @@ export default function AskDecisionVaultPage() {
       {/* Answer View */}
       {response && (
         <div className="space-y-6">
-          <div className="rounded-lg border border-vault-accent/30 bg-vault-surface/40 p-6 space-y-4">
+          <div className="rounded-lg border border-emerald-500/30 bg-[#0e1424]/90 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-vault-accent font-semibold">
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 font-mono">
                 Grounded Engineering Answer
               </span>
-              <span className="text-[10px] font-mono text-vault-text-dim">
+              <span className="text-xs text-slate-400">
                 Source: Local Gemma 4 E4B + Evidence Lock
               </span>
             </div>
 
-            <p className="text-sm font-sans text-vault-text leading-relaxed">{response.answer}</p>
+            <p className="text-sm text-slate-100 leading-relaxed">{response.answer}</p>
 
             {response.insufficientEvidence && (
-              <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-400 font-mono">
+              <div className="rounded-md border border-amber-500/25 bg-amber-500/10 p-3 text-xs text-amber-300">
                 ⚠ Insufficient Evidence: No verifiable historical quote in this repo proves the
                 requested claim.
               </div>
@@ -248,7 +243,7 @@ export default function AskDecisionVaultPage() {
           {/* Citations & Verified Quotes */}
           {response.citations.length > 0 && (
             <div className="space-y-3">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-vault-text-dim">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
                 Supporting Evidence Citations ({response.citations.length})
               </div>
 
@@ -256,7 +251,7 @@ export default function AskDecisionVaultPage() {
                 {response.citations.map((cite, idx) => (
                   <div
                     key={idx}
-                    className="rounded border border-vault-border bg-vault-surface/30 p-4 space-y-2 text-xs"
+                    className="rounded-lg border border-slate-800 bg-[#0e1424]/75 p-4 space-y-2 text-xs"
                   >
                     <div className="flex items-center justify-between">
                       <EvidenceChip
@@ -268,21 +263,21 @@ export default function AskDecisionVaultPage() {
                         href={cite.evidence.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[10px] font-mono text-vault-accent hover:underline"
+                        className="text-xs text-slate-400 hover:text-emerald-400 transition-colors"
                       >
                         GitHub Discussion ↗
                       </a>
                     </div>
-                    <blockquote className="italic text-vault-text font-sans border-l border-vault-border pl-2 my-1">
+                    <blockquote className="italic text-slate-300 border-l-2 border-slate-700 pl-2.5 my-1.5 leading-relaxed">
                       &ldquo;{cite.evidence.quote}&rdquo;
                     </blockquote>
-                    <div className="text-[10px] font-mono text-vault-text-dim pt-1 flex items-center justify-between">
+                    <div className="text-xs text-slate-500 pt-1 flex items-center justify-between font-mono text-[11px]">
                       <span>
-                        By {cite.evidence.author} ({cite.evidence.role})
+                        By @{cite.evidence.author} ({cite.evidence.role})
                       </span>
                       <a
                         href={`/decisions/${cite.decisionId}`}
-                        className="text-vault-text hover:text-vault-accent"
+                        className="text-emerald-400 hover:text-emerald-300 font-medium"
                       >
                         Decision #{cite.decisionId} →
                       </a>
@@ -296,7 +291,7 @@ export default function AskDecisionVaultPage() {
           {/* Related Decision Records */}
           {relatedDecisions.length > 0 && (
             <div className="space-y-3">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-vault-text-dim">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
                 Related Historical Decisions
               </div>
               <div className="space-y-2">
@@ -304,15 +299,17 @@ export default function AskDecisionVaultPage() {
                   <a
                     key={dec.id}
                     href={`/decisions/${dec.id}`}
-                    className="block rounded-lg border border-vault-border bg-vault-surface/30 p-4 hover:border-vault-border-bright transition-colors"
+                    className="block rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-4 hover:border-slate-700 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-xs font-bold text-vault-text hover:text-vault-accent">
+                      <span className="text-sm font-semibold text-slate-100 hover:text-emerald-300 transition-colors">
                         #{dec.id}: {dec.title}
                       </span>
                       <StatusBadge status={dec.status} />
                     </div>
-                    <p className="text-xs text-vault-text-dim line-clamp-2">{dec.summary}</p>
+                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      {dec.summary}
+                    </p>
                   </a>
                 ))}
               </div>

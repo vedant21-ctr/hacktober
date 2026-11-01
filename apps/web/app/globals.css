@@ -2,33 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --background: #0a0e17;
-  --foreground: #e8edf5;
+  --background: #080c14;
+  --foreground: #f1f5f9;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1e293b #0a0e17;
+  scrollbar-color: #1e293b #080c14;
 }
 
 *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 *::-webkit-scrollbar-track {
-  background: #0a0e17;
+  background: #080c14;
 }
 
 *::-webkit-scrollbar-thumb {
   background: #1e293b;
-  border-radius: 3px;
+  border-radius: 2.5px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
@@ -39,32 +39,14 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-sans);
+  letter-spacing: -0.011em;
 }
 
-/* Technical grid background */
-.bg-technical-grid {
-  background-image:
-    linear-gradient(to right, rgba(30, 41, 59, 0.2) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(30, 41, 59, 0.2) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
-/* Evidence quote styling */
+/* Restrained evidence quote styling */
 .evidence-quote {
   position: relative;
   padding-left: 1rem;
-  border-left: 2px solid #334155;
-}
-
-.evidence-quote::before {
-  content: '"';
-  position: absolute;
-  left: -0.25rem;
-  top: -0.5rem;
-  font-size: 2rem;
-  color: #334155;
-  font-family: Georgia, serif;
-  line-height: 1;
+  border-left: 2px solid #10b981;
 }
 
 /* Status indicator animation */
@@ -74,7 +56,7 @@ body {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }
 
@@ -85,7 +67,7 @@ body {
 /* File tree indentation */
 .file-tree-item {
   position: relative;
-  padding-left: 1.5rem;
+  padding-left: 1.25rem;
 }
 
 .file-tree-item::before {
@@ -96,21 +78,6 @@ body {
   bottom: 0;
   width: 1px;
   background: #1e293b;
-}
-
-/* Pipeline stage connector */
-.pipeline-connector {
-  position: relative;
-}
-
-.pipeline-connector::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -1rem;
-  height: 1rem;
-  width: 1px;
-  background: #334155;
 }
 
 /* Timeline line */
@@ -124,23 +91,23 @@ body {
   left: 1rem;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, #1e293b, #334155, #1e293b);
+  width: 1px;
+  background: #1e293b;
 }
 
 /* Glass effect */
 .glass {
-  background: rgba(17, 24, 39, 0.6);
+  background: rgba(14, 20, 36, 0.75);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Custom focus ring */
+/* Custom focus ring - restrained emerald */
 .focus-vault:focus {
   outline: none;
   box-shadow:
-    0 0 0 2px #0a0e17,
-    0 0 0 4px rgba(200, 255, 0, 0.3);
+    0 0 0 2px #080c14,
+    0 0 0 4px rgba(16, 185, 129, 0.35);
 }
 
 /* Navigation active indicator */
@@ -156,19 +123,8 @@ body {
   transform: translateY(-50%);
   width: 2px;
   height: 60%;
-  background: #c8ff00;
+  background: #10b981;
   border-radius: 1px;
-}
-
-/* Scan line effect for headers */
-.scan-lines {
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(200, 255, 0, 0.02) 2px,
-    rgba(200, 255, 0, 0.02) 4px
-  );
 }
 
 @layer utilities {

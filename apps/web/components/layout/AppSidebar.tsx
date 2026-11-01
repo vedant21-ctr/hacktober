@@ -15,14 +15,14 @@ const navItems = [
   {
     name: 'Overview',
     href: '/',
-    description: 'System status & key metrics',
+    description: 'Executive metrics & attention queue',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={1.75}
-          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
         />
       </svg>
     ),
@@ -30,9 +30,9 @@ const navItems = [
   {
     name: 'Decision Explorer',
     href: '/decisions',
-    description: 'Recovered decisions & evidence',
+    description: 'Recovered decisions & evidence dossiers',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -45,9 +45,9 @@ const navItems = [
   {
     name: 'Import Repository',
     href: '/import',
-    description: 'Ingest issues & discussions',
+    description: 'Ingest GitHub threads & discussions',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -60,9 +60,9 @@ const navItems = [
   {
     name: 'Prior-Decision Warning',
     href: '/sandbox',
-    description: 'Code change radar & sandbox',
+    description: 'Proposed changes vs settled history',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -80,7 +80,7 @@ const intelligenceTools = [
     href: '/prior-art',
     description: 'Simulated PR conflict & prior-art check',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -95,7 +95,7 @@ const intelligenceTools = [
     href: '/code',
     description: 'File-to-decision path attribution',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -108,9 +108,9 @@ const intelligenceTools = [
   {
     name: 'Timeline Trail',
     href: '/timeline',
-    description: 'Chronological discussion & event trace',
+    description: 'Chronological event trace',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -125,7 +125,7 @@ const intelligenceTools = [
     href: '/evidence',
     description: 'Verbatim quotes & Evidence Lock records',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -140,7 +140,7 @@ const intelligenceTools = [
     href: '/relationships',
     description: 'Supersedes & cross-decision graph',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -155,7 +155,7 @@ const intelligenceTools = [
     href: '/radar',
     description: 'Assumption & constraint health drift',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -170,7 +170,7 @@ const intelligenceTools = [
     href: '/ask',
     description: 'Natural language query over memory',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -185,7 +185,7 @@ const intelligenceTools = [
     href: '/benchmark',
     description: 'F1, precision & recall metrics',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -200,7 +200,7 @@ const intelligenceTools = [
     href: '/status',
     description: 'Local Ollama & SQLite runtime',
     icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -216,17 +216,29 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
   const pathname = usePathname();
 
   const sidebarContent = (
-    <div className="flex h-full flex-col justify-between p-4 bg-slate-950 border-r border-slate-800/80 overflow-y-auto">
+    <div className="flex h-full flex-col justify-between p-3.5 bg-[#0b101c] border-r border-slate-800/70 overflow-y-auto">
       <div className="space-y-6">
-        {/* Brand header */}
-        <div className="flex items-center justify-between px-2 pt-1">
-          <Link href="/" className="flex items-center space-x-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-sm">
-              DV
+        {/* Brand Header */}
+        <div className="flex items-center justify-between px-2 pt-1.5 pb-1">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
             </span>
-            <span className="font-mono text-base font-bold tracking-tight text-slate-100">
-              DecisionVault
-            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold tracking-tight text-slate-100 group-hover:text-white transition-colors">
+                DecisionVault
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium tracking-normal -mt-0.5">
+                Decision Intelligence
+              </span>
+            </div>
           </Link>
           <button
             onClick={onClose}
@@ -245,11 +257,11 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
         </div>
 
         {/* Primary Navigation Section */}
-        <div className="px-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 font-mono px-2 mb-2">
+        <div>
+          <div className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
             Navigation
-          </p>
-          <nav className="space-y-1">
+          </div>
+          <nav className="space-y-0.5">
             {navItems.map((item) => {
               const isActive =
                 item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
@@ -258,24 +270,21 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className={`group flex items-start gap-3 rounded-md px-3 py-2 text-xs transition-colors ${
+                  className={`group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-colors ${
                     isActive
-                      ? 'bg-slate-800 text-emerald-300 font-semibold border-l-2 border-emerald-400'
-                      : 'text-slate-300 hover:bg-slate-900/80 hover:text-slate-100'
+                      ? 'bg-emerald-500/10 text-emerald-300 font-semibold border-l-2 border-emerald-400 pl-2'
+                      : 'text-slate-300 hover:bg-slate-800/40 hover:text-slate-100'
                   }`}
                 >
                   <span
-                    className={`mt-0.5 flex-shrink-0 ${
-                      isActive ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'
-                    }`}
+                    className={
+                      isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'
+                    }
                   >
                     {item.icon}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-xs text-slate-100">{item.name}</div>
-                    <div className="text-[11px] text-slate-400 leading-snug mt-0.5">
-                      {item.description}
-                    </div>
+                  <div className="min-w-0 flex-1 truncate">
+                    <div className="truncate text-xs">{item.name}</div>
                   </div>
                 </Link>
               );
@@ -284,11 +293,11 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
         </div>
 
         {/* Intelligence Tools Section */}
-        <div className="px-1 pt-4 border-t border-slate-800/80">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 font-mono px-2 mb-2">
+        <div className="pt-3 border-t border-slate-800/60">
+          <div className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
             Intelligence Tools
-          </p>
-          <nav className="space-y-1">
+          </div>
+          <nav className="space-y-0.5">
             {intelligenceTools.map((tool) => {
               const isToolActive = pathname === tool.href || pathname.startsWith(tool.href + '/');
               return (
@@ -296,26 +305,23 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
                   key={tool.href}
                   href={tool.href}
                   onClick={onClose}
-                  className={`group flex items-start gap-3 rounded-md px-3 py-2 text-xs transition-colors ${
+                  className={`group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-colors ${
                     isToolActive
-                      ? 'bg-slate-800 text-cyan-300 font-semibold border-l-2 border-cyan-400'
-                      : 'text-slate-300 hover:bg-slate-900/80 hover:text-slate-100'
+                      ? 'bg-emerald-500/10 text-emerald-300 font-semibold border-l-2 border-emerald-400 pl-2'
+                      : 'text-slate-300 hover:bg-slate-800/40 hover:text-slate-100'
                   }`}
                 >
                   <span
-                    className={`mt-0.5 flex-shrink-0 ${
-                      isToolActive ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'
-                    }`}
+                    className={
+                      isToolActive
+                        ? 'text-emerald-400'
+                        : 'text-slate-400 group-hover:text-slate-200'
+                    }
                   >
                     {tool.icon}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-mono text-xs font-medium text-slate-200 group-hover:text-slate-100">
-                      {tool.name}
-                    </div>
-                    <div className="text-[11px] text-slate-400 leading-snug mt-0.5">
-                      {tool.description}
-                    </div>
+                  <div className="min-w-0 flex-1 truncate">
+                    <div className="truncate text-xs">{tool.name}</div>
                   </div>
                 </Link>
               );
@@ -325,16 +331,16 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
       </div>
 
       {/* Inference runtime badge */}
-      <div className="mt-6 rounded-lg border border-slate-800/80 bg-slate-900/50 p-3 space-y-2">
+      <div className="mt-6 rounded-lg border border-slate-800/80 bg-slate-900/50 p-3 space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
             Inference Target
           </span>
-          <span className="rounded bg-emerald-950/60 border border-emerald-800/60 px-1.5 py-0.5 text-[9px] font-mono text-emerald-400 font-bold">
+          <span className="rounded bg-emerald-950/60 border border-emerald-800/50 px-1.5 py-0.5 text-[9px] font-mono text-emerald-400 font-semibold">
             LOCAL
           </span>
         </div>
-        <p className="text-[11px] text-slate-200 font-mono font-semibold">gemma4:e4b</p>
+        <p className="text-xs text-slate-200 font-mono font-medium">gemma4:e4b</p>
         <p className="text-[10px] text-slate-400 leading-tight">
           Strictly local Ollama runtime. Zero cloud AI dependencies.
         </p>
@@ -344,17 +350,17 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
 
   return (
     <>
-      {/* Desktop Sidebar (w-72 provides clean readability and prevents awkward wrapping) */}
-      <aside className="hidden md:block w-72 flex-shrink-0">{sidebarContent}</aside>
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:block w-64 flex-shrink-0">{sidebarContent}</aside>
 
       {/* Mobile Drawer */}
       {isOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
           <div
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-[#080c14]/80 backdrop-blur-sm transition-opacity"
             onClick={onClose}
           />
-          <div className="relative z-50 flex w-72 max-w-xs flex-1 flex-col">{sidebarContent}</div>
+          <div className="relative z-50 flex w-64 max-w-xs flex-1 flex-col">{sidebarContent}</div>
         </div>
       )}
     </>

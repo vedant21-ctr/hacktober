@@ -4,9 +4,9 @@ import './globals.css';
 import { Shell } from '../components/layout/Shell';
 
 export const metadata: Metadata = {
-  title: 'DecisionVault — Open Source Decision Intelligence',
+  title: 'DecisionVault — Engineering Decision Intelligence',
   description:
-    'Engineering knowledge recovery platform extracting technical decisions and verified evidence from open-source discussions.',
+    'Engineering decision intelligence and knowledge recovery platform extracting technical decisions and verified evidence from discussions.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,11 +14,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-slate-950 text-slate-100 antialiased flex flex-col font-sans">
+      <body className="min-h-screen bg-[#080c14] text-slate-100 antialiased flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-200">
         {isMockMode && (
           <div
             data-testid="mock-data-banner"
-            className="w-full bg-amber-500 text-slate-950 px-4 py-1.5 text-center text-xs font-bold uppercase tracking-wider shadow-sm z-50"
+            className="w-full bg-amber-500 text-slate-950 px-4 py-1.5 text-center text-xs font-bold uppercase tracking-wider shadow-sm z-50 font-mono"
           >
             MOCK DATA — Offline Contract Fixture Mode Active
           </div>

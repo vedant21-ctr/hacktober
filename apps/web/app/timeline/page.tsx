@@ -1,12 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type {
-  Repository,
-  DecisionCard,
-  DecisionDetail,
-  TimelineEvent,
-} from '@decisionvault/shared/api';
+import type { Repository, DecisionCard, DecisionDetail } from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../lib/api';
 import {
   PageTitle,
@@ -86,11 +81,9 @@ export default function DecisionTimelinePage() {
     setApiNotice(false);
 
     try {
-      // Load decision detail first
       const detail = await api.getDecisionDetail(decisionId);
       setSelectedDecision(detail);
 
-      // Attempt GET /api/timeline/:decisionId
       try {
         const timelineRes = await api.getTimeline(decisionId);
         setTimelineEvents(timelineRes.events);
@@ -98,7 +91,6 @@ export default function DecisionTimelinePage() {
         if (timelineErr instanceof ApiClientError && timelineErr.status === 501) {
           setApiNotice(true);
         }
-        // Fallback: Construct timeline events from decision events, evidence, and alternatives
         const reconstructed: ChronoEvent[] = [];
 
         detail.events.forEach((ev) => {
@@ -136,7 +128,6 @@ export default function DecisionTimelinePage() {
           });
         });
 
-        // Sort chronologically
         reconstructed.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
         setTimelineEvents(reconstructed);
       }
@@ -179,24 +170,24 @@ export default function DecisionTimelinePage() {
         };
       case 'clarification':
         return {
-          color: 'text-purple-400',
-          border: 'border-purple-500/40',
-          bg: 'bg-purple-500/10',
+          color: 'text-slate-300',
+          border: 'border-slate-700',
+          bg: 'bg-slate-800/80',
           icon: 'ℹ',
         };
       case 'decision':
       default:
         return {
-          color: 'text-vault-accent',
-          border: 'border-vault-accent/40',
-          bg: 'bg-vault-accent/10',
+          color: 'text-emerald-400',
+          border: 'border-emerald-500/40',
+          bg: 'bg-emerald-500/10',
           icon: '◈',
         };
     }
   }
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl">
+    <div className="space-y-6 max-w-5xl">
       <PageTitle
         title="Decision Timeline"
         subtitle="Chronological Discussion Flow — Trace how architectural decisions emerged, faced objections, and reached resolution."
@@ -205,7 +196,7 @@ export default function DecisionTimelinePage() {
             <select
               value={selectedRepoId || ''}
               onChange={(e) => setSelectedRepoId(Number(e.target.value))}
-              className="rounded-md border border-vault-border bg-vault-surface px-3 py-1.5 text-xs text-vault-text font-mono focus-vault"
+              className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
             >
               {repos.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -217,7 +208,7 @@ export default function DecisionTimelinePage() {
               value={selectedDecisionId || ''}
               onChange={(e) => setSelectedDecisionId(Number(e.target.value))}
               disabled={decisions.length === 0}
-              className="rounded-md border border-vault-border bg-vault-surface px-3 py-1.5 text-xs text-vault-text font-mono focus-vault max-w-[280px] truncate"
+              className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80 max-w-[280px] truncate"
             >
               {decisions.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -240,9 +231,9 @@ export default function DecisionTimelinePage() {
 
       {/* Selected Decision Summary Card */}
       {selectedDecision && (
-        <div className="rounded-lg border border-vault-border bg-vault-surface/30 p-5 space-y-2">
+        <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-5 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-mono uppercase tracking-widest text-vault-text-dim">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
               Timeline Subject
             </span>
             <div className="flex items-center gap-2">
@@ -250,10 +241,8 @@ export default function DecisionTimelinePage() {
               <ConfidenceMeter value={selectedDecision.confidence} />
             </div>
           </div>
-          <h2 className="text-base font-bold font-mono text-vault-text">
-            {selectedDecision.title}
-          </h2>
-          <p className="text-xs text-vault-text-dim leading-relaxed">{selectedDecision.summary}</p>
+          <h2 className="text-base font-semibold text-slate-100">{selectedDecision.title}</h2>
+          <p className="text-xs text-slate-400 leading-relaxed">{selectedDecision.summary}</p>
         </div>
       )}
 
@@ -265,54 +254,62 @@ export default function DecisionTimelinePage() {
           ))}
         </div>
       ) : timelineEvents.length > 0 ? (
-        <div className="relative pl-6 sm:pl-8 border-l border-vault-border ml-4 sm:ml-6 space-y-6 my-6">
+        <div className="relative pl-6 sm:pl-8 border-l border-slate-800 ml-4 sm:ml-6 space-y-6 my-6">
           {timelineEvents.map((ev, idx) => {
             const style = getEventTypeStyle(ev.type);
             return (
               <div key={idx} className="relative group">
                 {/* Node Marker */}
                 <div
-                  className={`absolute -left-[31px] sm:-left-[39px] top-1.5 w-6 h-6 rounded-full border ${style.border} ${style.bg} flex items-center justify-center text-xs font-mono font-bold ${style.color}`}
+                  className={`absolute -left-[31px] sm:-left-[39px] top-1.5 w-5 h-5 rounded-full border ${style.border} ${style.bg} flex items-center justify-center text-[10px] font-mono font-bold ${style.color}`}
                 >
                   {style.icon}
                 </div>
 
                 {/* Event Card */}
-                <div className="rounded-lg border border-vault-border bg-vault-surface/30 p-4 space-y-2 group-hover:border-vault-border-bright transition-all">
-                  <div className="flex items-center justify-between text-xs font-mono">
+                <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-4 space-y-2 hover:border-slate-700 transition-colors">
+                  <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${style.bg} ${style.color}`}
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${style.bg} ${style.color}`}
                       >
                         {ev.type}
                       </span>
                       {ev.author && (
-                        <span className="text-vault-text font-medium">
-                          {ev.author}{' '}
-                          {ev.role && <span className="text-vault-text-dim">({ev.role})</span>}
+                        <span className="text-slate-200 font-medium">
+                          @{ev.author}{' '}
+                          {ev.role && (
+                            <span className="text-slate-500 font-mono text-[11px]">
+                              ({ev.role})
+                            </span>
+                          )}
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-vault-text-dim">
+                    <span className="text-[11px] text-slate-400 font-mono">
                       {new Date(ev.at).toLocaleString()}
                     </span>
                   </div>
 
                   {ev.quote && (
-                    <blockquote className="italic text-xs text-vault-text/90 font-sans border-l-2 border-vault-border pl-3 my-2">
+                    <blockquote className="italic text-xs text-slate-300 border-l-2 border-slate-700 pl-3 my-2 leading-relaxed">
                       &ldquo;{ev.quote}&rdquo;
                     </blockquote>
                   )}
 
-                  <div className="flex items-center justify-between text-[10px] font-mono text-vault-text-dim pt-1 border-t border-vault-border/40">
-                    <span className={ev.verified ? 'text-emerald-400' : 'text-amber-400'}>
+                  <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-800/50">
+                    <span
+                      className={
+                        ev.verified ? 'text-emerald-400 font-medium' : 'text-amber-400 font-medium'
+                      }
+                    >
                       {ev.verified ? '✓ Verified in Git History' : '○ Unverified'}
                     </span>
                     <a
                       href={ev.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-vault-accent hover:underline"
+                      className="text-slate-400 hover:text-emerald-400 transition-colors font-medium"
                     >
                       View on GitHub ↗
                     </a>

@@ -76,10 +76,10 @@ export default function Sidebar() {
           </div>
           {!collapsed && (
             <div>
-              <div className="font-mono text-sm font-bold tracking-tight text-vault-text">
+              <div className="text-sm font-semibold tracking-tight text-vault-text">
                 DecisionVault
               </div>
-              <div className="text-[9px] font-mono text-vault-text-dim tracking-wider uppercase">
+              <div className="text-[10px] text-vault-text-dim tracking-wider uppercase">
                 Engineering Memory
               </div>
             </div>
