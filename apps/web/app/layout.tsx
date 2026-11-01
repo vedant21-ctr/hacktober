@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import React from 'react';
 import './globals.css';
+import { Shell } from '../components/layout/Shell';
 
 export const metadata: Metadata = {
   title: 'DecisionVault — Open Source Decision Intelligence',
@@ -12,8 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const isMockMode = process.env.NEXT_PUBLIC_API_MODE === 'mock';
 
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-slate-950 text-slate-100 antialiased flex flex-col">
+    <html lang="en" className="dark">
+      <body className="min-h-screen bg-slate-950 text-slate-100 antialiased flex flex-col font-sans">
         {isMockMode && (
           <div
             data-testid="mock-data-banner"
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             MOCK DATA — Offline Contract Fixture Mode Active
           </div>
         )}
+        <Shell>{children}</Shell>
         <header className="border-b border-slate-800 bg-slate-900/60 px-6 py-4 backdrop-blur">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center space-x-6">
