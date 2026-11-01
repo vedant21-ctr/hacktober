@@ -33,10 +33,13 @@ export default function AskDecisionVaultPage() {
   const [relatedDecisions, setRelatedDecisions] = useState<DecisionCard[]>([]);
 
   useEffect(() => {
-    api.getRepositories().then((d) => {
-      setRepos(d.items);
-      if (d.items.length > 0) setSelectedRepoId(d.items[0].id);
-    }).catch(() => {});
+    api
+      .getRepositories()
+      .then((d) => {
+        setRepos(d.items);
+        if (d.items.length > 0) setSelectedRepoId(d.items[0].id);
+      })
+      .catch(() => {});
   }, []);
 
   async function handleAsk(e?: React.FormEvent, customQuestion?: string) {
@@ -74,7 +77,10 @@ export default function AskDecisionVaultPage() {
 
   async function runGroundedAnswerSynthesis(repoId: number, query: string) {
     const decisionsData = await api.getDecisions({ repoId, pageSize: 50 });
-    const queryTokens = query.toLowerCase().split(/\s+/).filter((t) => t.length > 2);
+    const queryTokens = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 2);
 
     const scoredDecisions: { decision: DecisionCard; score: number }[] = [];
 
@@ -123,7 +129,8 @@ export default function AskDecisionVaultPage() {
       const primary = topMatches[0];
       answerText = `Based on recovered decision #${primary.id} ("${primary.title}"), the engineering team chose this implementation because: ${primary.summary}. This decision is recorded with ${Math.round(primary.confidence * 100)}% confidence and is backed by ${Math.round(primary.verifiedRatio * 100)}% Evidence Lock verification.`;
     } else {
-      answerText = 'No directly grounded historical decision records match your question in this repository. All answers in DecisionVault are strictly tied to verified GitHub discussion evidence.';
+      answerText =
+        'No directly grounded historical decision records match your question in this repository. All answers in DecisionVault are strictly tied to verified GitHub discussion evidence.';
     }
 
     setResponse({
@@ -228,13 +235,12 @@ export default function AskDecisionVaultPage() {
               </span>
             </div>
 
-            <p className="text-sm font-sans text-vault-text leading-relaxed">
-              {response.answer}
-            </p>
+            <p className="text-sm font-sans text-vault-text leading-relaxed">{response.answer}</p>
 
             {response.insufficientEvidence && (
               <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-400 font-mono">
-                ⚠ Insufficient Evidence: No verifiable historical quote in this repo proves the requested claim.
+                ⚠ Insufficient Evidence: No verifiable historical quote in this repo proves the
+                requested claim.
               </div>
             )}
           </div>
@@ -271,7 +277,9 @@ export default function AskDecisionVaultPage() {
                       &ldquo;{cite.evidence.quote}&rdquo;
                     </blockquote>
                     <div className="text-[10px] font-mono text-vault-text-dim pt-1 flex items-center justify-between">
-                      <span>By {cite.evidence.author} ({cite.evidence.role})</span>
+                      <span>
+                        By {cite.evidence.author} ({cite.evidence.role})
+                      </span>
                       <a
                         href={`/decisions/${cite.decisionId}`}
                         className="text-vault-text hover:text-vault-accent"
@@ -304,9 +312,7 @@ export default function AskDecisionVaultPage() {
                       </span>
                       <StatusBadge status={dec.status} />
                     </div>
-                    <p className="text-xs text-vault-text-dim line-clamp-2">
-                      {dec.summary}
-                    </p>
+                    <p className="text-xs text-vault-text-dim line-clamp-2">{dec.summary}</p>
                   </a>
                 ))}
               </div>

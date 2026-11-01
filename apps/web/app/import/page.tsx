@@ -2,75 +2,86 @@
 
 import React, { useState, useEffect } from 'react';
 import type { Repository, Job, StatusResponse } from '@decisionvault/shared/api';
-import { api } from '../lib/api';
-import {
-  PageTitle,
-  Card,
-  EmptyState,
-  ErrorDisplay,
-} from '../components/ui';
-
-const STAGES = ['ingest', 'chunk', 'label', 'extract', 'verify', 'link', 'health', 'done'] as const;
-
-const stageLabels: Record<string, string> = {
-  ingest: 'GitHub Ingestion',
-  chunk: 'Comment Chunking',
-  label: 'Comment Classification',
-  extract: 'Decision Reconstruction',
-  verify: 'Evidence Verification',
-  link: 'Code Mapping',
-  health: 'Condition Health',
-  done: 'Complete',
-};
 
 export default function ImportPage() {
   const [target, setTarget] = useState('');
-  const [limit, setLimit] = useState(20);
-  const [status, setStatus] = useState<StatusResponse | null>(null);
-  const [repos, setRepos] = useState<Repository[]>([]);
+  const [limit, setLimit] = useState<number>(20);
+  const [statusInfo, setStatusInfo] = useState<StatusResponse | null>(null);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loadingRepos, setLoadingRepos] = useState(true);
+
+  // Import Job State
   const [currentJob, setCurrentJob] = useState<Job | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Fetch status and repositories on mount
   useEffect(() => {
-    api.getStatus().then(setStatus).catch(() => {});
-    loadRepos();
+    fetchStatus();
+    fetchRepositories();
   }, []);
 
+  // Poll active job if one is running
   useEffect(() => {
-    if (!currentJob || currentJob.status === 'succeeded' || currentJob.status === 'failed') return;
+    if (!currentJob || currentJob.status === 'succeeded' || currentJob.status === 'failed') {
+      return;
+    }
 
     const timer = setInterval(async () => {
       try {
-        const updated = await api.getJob(currentJob.id);
-        setCurrentJob(updated);
-        if (updated.status === 'succeeded') {
-          setSuccessMsg(
-            updated.type === 'extract_decisions'
-              ? 'Decision extraction completed. View recovered decisions.'
-              : `Successfully imported ${updated.progress.total} sources.`,
-          );
-          loadRepos();
-        } else if (updated.status === 'failed') {
-          setFormError(updated.error || 'Job failed');
+        const res = await fetch(`/api/jobs/${currentJob.id}`);
+        if (res.ok) {
+          const updatedJob: Job = await res.json();
+          setCurrentJob(updatedJob);
+          if (updatedJob.status === 'succeeded') {
+            if (updatedJob.type === 'extract_decisions') {
+              setSuccessMessage(
+                `Decision extraction completed successfully! You can now view recovered decisions.`,
+              );
+            } else {
+              setSuccessMessage(
+                `Successfully imported ${updatedJob.progress.total} sources from GitHub repository.`,
+              );
+              fetchRepositories();
+            }
+          } else if (updatedJob.status === 'failed') {
+            setFormError(updatedJob.error || 'Job failed');
+          }
+        } else if (res.status === 404) {
+          setCurrentJob(null);
+          setFormError('Import job not found or expired.');
         }
-      } catch {
-        // polling error
+      } catch (err) {
+        console.error('Failed to poll job status:', err);
       }
-    }, 1200);
+    }, 1000);
 
     return () => clearInterval(timer);
   }, [currentJob]);
 
-  async function loadRepos() {
+  async function fetchStatus() {
+    try {
+      const res = await fetch('/api/status');
+      if (res.ok) {
+        const data = await res.json();
+        setStatusInfo(data);
+      }
+    } catch {
+      // Backend offline or in mock
+    }
+  }
+
+  async function fetchRepositories() {
     setLoadingRepos(true);
     try {
-      const data = await api.getRepositories();
-      setRepos(data.items);
-    } catch {
-      // silent
+      const res = await fetch('/api/repositories');
+      if (res.ok) {
+        const data = await res.json();
+        setRepositories(data.items || []);
+      }
+    } catch (err) {
+      console.error('Failed to load repositories:', err);
     } finally {
       setLoadingRepos(false);
     }
@@ -83,10 +94,10 @@ export default function ImportPage() {
       try {
         const url = new URL(trimmed);
         if (url.hostname !== 'github.com' && url.hostname !== 'www.github.com') {
-          return 'Only GitHub repositories (github.com) are supported.';
+          return 'Only official GitHub repositories (github.com) are supported.';
         }
       } catch {
-        return 'Invalid URL.';
+        return 'Invalid repository URL.';
       }
     }
     return null;
@@ -95,20 +106,37 @@ export default function ImportPage() {
   async function handleImport(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
-    setSuccessMsg(null);
+    setSuccessMessage(null);
 
-    const err = validateTarget(target);
-    if (err) { setFormError(err); return; }
+    const validationErr = validateTarget(target);
+    if (validationErr) {
+      setFormError(validationErr);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const { jobId } = await api.importRepository({
-        kind: 'github_repo',
-        target: target.trim(),
-        limit: Number(limit) || 20,
+      const res = await fetch('/api/imports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'github_repo',
+          target: target.trim(),
+          limit: Number(limit) || 20,
+        }),
       });
-      const job = await api.getJob(jobId);
-      setCurrentJob(job);
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || 'Failed to start import job');
+      }
+
+      // Fetch newly created job details
+      const jobRes = await fetch(`/api/jobs/${data.jobId}`);
+      if (jobRes.ok) {
+        const jobData = await jobRes.json();
+        setCurrentJob(jobData);
+      }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -118,250 +146,227 @@ export default function ImportPage() {
 
   async function handleExtract(repoId: number) {
     setFormError(null);
-    setSuccessMsg(null);
+    setSuccessMessage(null);
     try {
-      const { jobId } = await api.extractDecisions({ repoId });
-      const job = await api.getJob(jobId);
-      setCurrentJob(job);
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || 'Failed to start extraction');
+      }
+      const jobRes = await fetch(`/api/jobs/${data.jobId}`);
+      if (jobRes.ok) {
+        const jobData = await jobRes.json();
+        setCurrentJob(jobData);
+      }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : String(err));
     }
   }
 
-  const isRunning = currentJob?.status === 'running' || currentJob?.status === 'queued';
-  const currentStageIdx = currentJob ? STAGES.indexOf(currentJob.stage as typeof STAGES[number]) : -1;
-
   return (
-    <div className="space-y-8 animate-fade-in max-w-4xl">
-      <PageTitle
-        title="Repository Ingestion"
-        subtitle="Import a Public Repository — extract issues, pull requests, and discussion threads from any public GitHub repository for decision recovery."
-        badge={isRunning ? 'IMPORT IN PROGRESS' : undefined}
-        actions={
-          <div className="flex items-center gap-3">
-            <div className="rounded border border-vault-border bg-vault-surface px-2.5 py-1 text-[9px] font-mono">
-              <span className="text-vault-text-dim">DB </span>
-              <span className={status?.db ? 'text-emerald-400' : 'text-amber-400'}>
-                {status?.db ? '● ONLINE' : '○ OFFLINE'}
-              </span>
-            </div>
-            <div className="rounded border border-vault-border bg-vault-surface px-2.5 py-1 text-[9px] font-mono">
-              <span className="text-vault-text-dim">LLM </span>
-              <span className="text-vault-text-muted">
-                {status?.ollama.model || 'gemma4:e4b'} ({status?.ollama.mode || 'replay'})
-              </span>
-            </div>
+    <div className="py-8 max-w-4xl mx-auto space-y-8">
+      {/* Header and Status */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-6">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 mb-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Phase 3A: Live GitHub Ingestion
           </div>
-        }
-      />
-
-      {/* ── Import Form ───────────────────────────────────────────────────── */}
-      <div className="rounded-lg border border-vault-border bg-vault-surface/30 p-6">
-        <div className="text-[9px] font-mono uppercase tracking-widest text-vault-text-dim mb-4">
-          Import a Public Repository
+          <h1 className="text-3xl font-bold tracking-tight text-slate-100">Repository Ingestion</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Import issues, pull requests, and discussion threads from any public GitHub repository.
+          </p>
         </div>
+
+        {/* System Badges */}
+        <div className="flex items-center gap-3">
+          <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-xs font-mono">
+            <span className="text-slate-500">DB: </span>
+            <span className={statusInfo?.db ? 'text-emerald-400' : 'text-amber-400'}>
+              {statusInfo?.db ? 'CONNECTED' : 'STANDALONE'}
+            </span>
+          </div>
+          <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-xs font-mono">
+            <span className="text-slate-500">LLM: </span>
+            <span className="text-slate-300">
+              {statusInfo?.ollama?.model || 'gemma4:e4b'} ({statusInfo?.ollama?.mode || 'replay'})
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Import Form */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6 shadow-sm">
+        <h2 className="text-base font-semibold text-slate-200 mb-1">Import a Public Repository</h2>
+        <p className="text-xs text-slate-400 mb-6">
+          Provide a GitHub repository identifier (e.g., <code>python/cpython</code> or{' '}
+          <code>https://github.com/facebook/react</code>). Outbound requests are strictly limited to
+          official GitHub APIs.
+        </p>
 
         <form onSubmit={handleImport} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="sm:col-span-3">
-              <label className="block text-[10px] font-mono text-vault-text-dim mb-1.5">
-                Repository (owner/repo or full URL)
+              <label htmlFor="target" className="block text-xs font-medium text-slate-300 mb-1">
+                Repository (owner/repo or URL)
               </label>
               <input
+                id="target"
                 type="text"
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
                 placeholder="e.g. facebook/react or https://github.com/facebook/react"
-                disabled={isSubmitting || isRunning}
-                className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2.5 text-sm text-vault-text font-mono placeholder-vault-text-dim focus-vault disabled:opacity-50"
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                disabled={isSubmitting || currentJob?.status === 'running'}
               />
             </div>
+
             <div>
-              <label className="block text-[10px] font-mono text-vault-text-dim mb-1.5">
+              <label htmlFor="limit" className="block text-xs font-medium text-slate-300 mb-1">
                 Max Issues/PRs
               </label>
               <input
+                id="limit"
                 type="number"
-                min={1}
-                max={100}
+                min="1"
+                max="100"
                 value={limit}
                 onChange={(e) => setLimit(parseInt(e.target.value, 10) || 20)}
-                disabled={isSubmitting || isRunning}
-                className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2.5 text-sm text-vault-text font-mono focus-vault disabled:opacity-50"
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                disabled={isSubmitting || currentJob?.status === 'running'}
               />
             </div>
           </div>
 
           {formError && (
-            <div className="rounded-md border border-vault-rose/30 bg-vault-rose/5 p-3 text-xs text-vault-rose font-mono">
-              <span className="font-semibold">Error: </span>{formError}
+            <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+              <span className="font-semibold">Import Error: </span>
+              {formError}
             </div>
           )}
 
-          {successMsg && (
-            <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-400 font-mono">
-              <span className="font-semibold">✓ </span>{successMsg}
-              <a href="/decisions" className="ml-2 underline hover:text-emerald-300">View Decisions →</a>
+          {successMessage && (
+            <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400">
+              <span className="font-semibold">Success: </span>
+              {successMessage}
             </div>
           )}
 
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <button
               type="submit"
-              disabled={isSubmitting || isRunning || !target.trim()}
-              className="rounded-md bg-vault-accent/10 border border-vault-accent/30 px-5 py-2.5 text-xs font-semibold text-vault-accent hover:bg-vault-accent/20 transition-colors font-mono disabled:opacity-30 disabled:cursor-not-allowed"
+              disabled={isSubmitting || currentJob?.status === 'running' || !target.trim()}
+              className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? 'Initiating...' : isRunning ? 'Job Running...' : '↓ Start GitHub Import'}
+              {isSubmitting
+                ? 'Initiating Import...'
+                : currentJob?.status === 'running'
+                  ? 'Ingesting in Background...'
+                  : 'Start GitHub Import'}
             </button>
           </div>
         </form>
-      </div>
 
-      {/* ── Pipeline Progress ─────────────────────────────────────────────── */}
-      {currentJob && isRunning && (
-        <div className="rounded-lg border border-vault-accent/20 bg-vault-accent/5 p-5 animate-slide-up">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-vault-accent animate-ping" />
-              <span className="text-xs font-mono font-semibold text-vault-accent">
-                Job #{currentJob.id} — {currentJob.type}
+        {/* Live Progress Card */}
+        {currentJob && currentJob.status === 'running' && (
+          <div className="mt-6 rounded-md border border-emerald-500/30 bg-slate-950/80 p-4 space-y-3">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-emerald-400 font-semibold flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+                Job #{currentJob.id} — Stage: {currentJob.stage.toUpperCase()}
+              </span>
+              <span className="text-slate-400">
+                Progress: {currentJob.progress.done} / {currentJob.progress.total}
               </span>
             </div>
-            <span className="text-[10px] font-mono text-vault-text-dim">
-              {currentJob.progress.done} / {currentJob.progress.total}
-              {currentJob.tokensPerSec ? ` • ${currentJob.tokensPerSec.toFixed(1)} tok/s` : ''}
-            </span>
-          </div>
 
-          {/* Progress bar */}
-          <div className="w-full bg-vault-border rounded-full h-2 mb-4 overflow-hidden">
-            <div
-              className="bg-vault-accent h-2 rounded-full transition-all duration-500"
-              style={{
-                width: `${currentJob.progress.total > 0
-                  ? Math.min(100, Math.round((currentJob.progress.done / currentJob.progress.total) * 100))
-                  : 10}%`,
-              }}
-            />
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-emerald-500 h-2 transition-all duration-300"
+                style={{
+                  width: `${
+                    currentJob.progress.total > 0
+                      ? Math.min(
+                          100,
+                          Math.round((currentJob.progress.done / currentJob.progress.total) * 100),
+                        )
+                      : 10
+                  }%`,
+                }}
+              ></div>
+            </div>
           </div>
+        )}
+      </div>
 
-          {/* Pipeline stages */}
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
-            {STAGES.map((stage, i) => {
-              const isCurrent = i === currentStageIdx;
-              const isDone = i < currentStageIdx;
-              return (
-                <div key={stage} className="flex flex-col items-center gap-1">
-                  <div
-                    className={`w-full h-1 rounded-full transition-colors ${
-                      isDone ? 'bg-vault-accent' : isCurrent ? 'bg-vault-accent/50 animate-pulse' : 'bg-vault-border'
-                    }`}
-                  />
-                  <span
-                    className={`text-[8px] font-mono uppercase tracking-wider text-center ${
-                      isDone ? 'text-vault-accent' : isCurrent ? 'text-vault-accent' : 'text-vault-text-dim'
-                    }`}
-                  >
-                    {stageLabels[stage]?.split(' ')[0] || stage}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Job completed */}
-      {currentJob && currentJob.status === 'succeeded' && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-400">✓</span>
-            <span className="text-xs font-mono text-emerald-400">
-              Job #{currentJob.id} completed successfully
-            </span>
-          </div>
-          <button
-            onClick={() => setCurrentJob(null)}
-            className="text-[10px] font-mono text-vault-text-dim hover:text-vault-text-muted"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {currentJob && currentJob.status === 'failed' && (
-        <div className="rounded-lg border border-vault-rose/20 bg-vault-rose/5 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-vault-rose">✕</span>
-            <span className="text-xs font-mono font-semibold text-vault-rose">
-              Job #{currentJob.id} failed at stage: {currentJob.stage}
-            </span>
-          </div>
-          {currentJob.error && (
-            <p className="text-[11px] font-mono text-vault-text-muted">{currentJob.error}</p>
-          )}
-        </div>
-      )}
-
-      {/* ── Imported Repositories ─────────────────────────────────────────── */}
-      <div className="rounded-lg border border-vault-border bg-vault-surface/30 p-6">
+      {/* Imported Repositories List */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-[9px] font-mono uppercase tracking-widest text-vault-text-dim mb-1">
-              Imported Repositories
-            </div>
-            <p className="text-[10px] text-vault-text-dim">
-              Live SQLite entries from verified GitHub ingestion
+            <h2 className="text-base font-semibold text-slate-200">Imported Repositories</h2>
+            <p className="text-xs text-slate-400">
+              Live SQLite database entries stored via verified GitHub ingestion.
             </p>
           </div>
           <button
-            onClick={loadRepos}
-            className="text-[10px] font-mono text-vault-accent hover:text-vault-accent-muted transition-colors"
+            onClick={fetchRepositories}
+            className="text-xs font-mono text-emerald-400 hover:text-emerald-300"
           >
             [Refresh]
           </button>
         </div>
 
         {loadingRepos ? (
-          <div className="py-8 text-center text-[10px] font-mono text-vault-text-dim animate-pulse">
-            Loading repositories...
+          <div className="text-center py-8 text-xs text-slate-500 font-mono">
+            Loading imported repositories...
           </div>
-        ) : repos.length === 0 ? (
-          <EmptyState
-            icon="⊞"
-            title="No Repositories Imported"
-            description="Submit a public GitHub repository URL above to start ingesting engineering discussion data."
-          />
+        ) : repositories.length === 0 ? (
+          <div className="rounded-md border border-dashed border-slate-800 p-8 text-center">
+            <p className="text-sm text-slate-400">No repositories have been imported yet.</p>
+            <p className="text-xs text-slate-600 mt-1">
+              Submit a public GitHub repository above to populate real discussion data.
+            </p>
+          </div>
         ) : (
-          <div className="divide-y divide-vault-border/50">
-            {repos.map((repo) => (
-              <div key={repo.id} className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="divide-y divide-slate-800/80">
+            {repositories.map((repo) => (
+              <div
+                key={repo.id}
+                className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+              >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-semibold text-vault-text">
+                    <span className="font-mono text-sm font-bold text-slate-200">
                       {repo.fullName}
                     </span>
-                    <span className="rounded bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[8px] font-mono font-bold text-emerald-400 uppercase">
-                      Live
+                    <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 text-[10px] font-mono text-emerald-400">
+                      LIVE DATA
                     </span>
                   </div>
-                  <div className="text-[10px] text-vault-text-dim font-mono mt-1">
-                    Branch: {repo.defaultBranch || 'main'} • Imported: {new Date(repo.importedAt).toLocaleString()}
+                  <div className="text-xs text-slate-400 mt-1 font-mono">
+                    Branch: {repo.defaultBranch || 'main'} • Imported:{' '}
+                    {new Date(repo.importedAt).toLocaleString()}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-500 font-mono">Repo #{repo.id}</span>
                   <button
                     onClick={() => handleExtract(repo.id)}
-                    disabled={isRunning}
-                    className="rounded bg-vault-accent/10 border border-vault-accent/30 px-3 py-1.5 text-[10px] font-semibold text-vault-accent hover:bg-vault-accent/20 transition-colors font-mono disabled:opacity-30"
+                    disabled={Boolean(currentJob && currentJob.status === 'running')}
+                    className="rounded bg-emerald-600/80 hover:bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition disabled:opacity-50"
                   >
                     Extract Decisions
                   </button>
                   <a
                     href={`/decisions?repoId=${repo.id}`}
-                    className="rounded bg-vault-surface border border-vault-border px-3 py-1.5 text-[10px] font-medium text-vault-text-muted hover:text-vault-text transition-colors font-mono"
+                    className="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition"
                   >
-                    Decisions →
+                    View Decisions →
                   </a>
                 </div>
               </div>

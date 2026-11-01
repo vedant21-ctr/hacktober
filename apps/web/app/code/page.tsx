@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Repository, DecisionCard, DecisionFile, CodeTreeNode } from '@decisionvault/shared/api';
+import type {
+  Repository,
+  DecisionCard,
+  DecisionFile,
+  CodeTreeNode,
+} from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../lib/api';
 import {
   PageTitle,
@@ -119,16 +124,12 @@ export default function CodeExplorerPage() {
       }
     }
 
-    const fileList = Array.from(fileMap.values()).sort(
-      (a, b) => b.decisionCount - a.decisionCount,
-    );
+    const fileList = Array.from(fileMap.values()).sort((a, b) => b.decisionCount - a.decisionCount);
     setFiles(fileList);
     if (fileList.length > 0) setSelectedFile(fileList[0]);
   }
 
-  const filteredFiles = files.filter((f) =>
-    f.path.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredFiles = files.filter((f) => f.path.toLowerCase().includes(search.toLowerCase()));
 
   function getLinkKindBadge(kind: string) {
     switch (kind) {

@@ -6,6 +6,7 @@ import HomePage from '../apps/web/app/page';
 import NotFound from '../apps/web/app/not-found';
 import ImportPage from '../apps/web/app/import/page';
 import DecisionsPage from '../apps/web/app/decisions/page';
+import PriorArtPage from '../apps/web/app/prior-art/page';
 
 describe('Frontend Component State & Scaffold Verification', () => {
   it('renders HomePage without fabricated metrics or fake decision counts', () => {
@@ -21,6 +22,7 @@ describe('Frontend Component State & Scaffold Verification', () => {
     expect(html).toContain('Recovered Decisions');
     expect(html).toContain('All Repositories');
     expect(html).toContain('Decision Status');
+    expect(html).toContain('File Path');
     expect(html).toContain('Search FTS5 Index');
   });
 
@@ -59,5 +61,16 @@ describe('Frontend Component State & Scaffold Verification', () => {
     const serialized = JSON.stringify(layoutElement);
     expect(serialized).toContain('MOCK DATA — Offline Contract Fixture Mode Active');
     delete process.env.NEXT_PUBLIC_API_MODE;
+  });
+
+  it('renders PriorArtPage with simulation banner, input modes, and action button', () => {
+    const html = renderToStaticMarkup(React.createElement(PriorArtPage));
+    expect(html).toContain('Prior-Art Detection');
+    expect(html).toContain('SIMULATED PR ANALYSIS — Grounded in recovered decisions');
+    expect(html).toContain('Select Imported Repository');
+    expect(html).toContain('PR / Files');
+    expect(html).toContain('Git Diff');
+    expect(html).toContain('Idea / Concept');
+    expect(html).toContain('Run Simulated PR Analysis');
   });
 });

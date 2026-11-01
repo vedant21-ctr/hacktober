@@ -24,10 +24,13 @@ export default function ReopenRadarPage() {
   const [recheckSuccess, setRecheckSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getRepositories().then((d) => {
-      setRepos(d.items);
-      if (d.items.length > 0) setSelectedRepoId(d.items[0].id);
-    }).catch(() => {});
+    api
+      .getRepositories()
+      .then((d) => {
+        setRepos(d.items);
+        if (d.items.length > 0) setSelectedRepoId(d.items[0].id);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -44,10 +47,7 @@ export default function ReopenRadarPage() {
     try {
       // Attempt GET /api/radar?repoId=&state=
       try {
-        const res = await api.getRadar(
-          repoId,
-          stateFilter !== 'all' ? stateFilter : undefined,
-        );
+        const res = await api.getRadar(repoId, stateFilter !== 'all' ? stateFilter : undefined);
         setRadarItems(res.items);
       } catch (radarErr) {
         if (radarErr instanceof ApiClientError && radarErr.status === 501) {
@@ -106,7 +106,9 @@ export default function ReopenRadarPage() {
       loadRadar(selectedRepoId);
     } catch (err) {
       if (err instanceof ApiClientError && err.status === 501) {
-        setRecheckSuccess('Recheck signal simulated (Backend /api/radar/recheck in Phase 4 roadmap).');
+        setRecheckSuccess(
+          'Recheck signal simulated (Backend /api/radar/recheck in Phase 4 roadmap).',
+        );
       } else {
         setError(err instanceof Error ? err.message : 'Recheck failed');
       }
@@ -221,7 +223,8 @@ export default function ReopenRadarPage() {
                   <div className="flex items-center gap-2">
                     {getHealthStateBadge(item.health)}
                     <span className="text-[10px] font-mono text-vault-text-dim">
-                      Alternative: <strong className="text-vault-text">{item.alternativeName}</strong>
+                      Alternative:{' '}
+                      <strong className="text-vault-text">{item.alternativeName}</strong>
                     </span>
                   </div>
                   <h3 className="text-sm font-bold font-mono text-vault-text">
@@ -255,7 +258,8 @@ export default function ReopenRadarPage() {
                 </div>
                 {item.condition.probeValue && (
                   <div className="text-[10px] text-vault-text-dim">
-                    Assumed Value: <code className="text-vault-text">{item.condition.probeValue}</code>
+                    Assumed Value:{' '}
+                    <code className="text-vault-text">{item.condition.probeValue}</code>
                   </div>
                 )}
               </div>

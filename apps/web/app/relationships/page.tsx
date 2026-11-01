@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Repository, DecisionCard, DecisionDetail, RelationshipItem } from '@decisionvault/shared/api';
+import type {
+  Repository,
+  DecisionCard,
+  DecisionDetail,
+  RelationshipItem,
+} from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../lib/api';
 import {
   PageTitle,
@@ -36,10 +41,13 @@ export default function DecisionRelationshipsPage() {
   const [apiNotice, setApiNotice] = useState(false);
 
   useEffect(() => {
-    api.getRepositories().then((d) => {
-      setRepos(d.items);
-      if (d.items.length > 0) setSelectedRepoId(d.items[0].id);
-    }).catch(() => {});
+    api
+      .getRepositories()
+      .then((d) => {
+        setRepos(d.items);
+        if (d.items.length > 0) setSelectedRepoId(d.items[0].id);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

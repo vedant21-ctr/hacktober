@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { BenchmarkCaseItem, BenchmarkRun, BenchmarkMatch, BenchmarkMiss } from '@decisionvault/shared/api';
+import type {
+  BenchmarkCaseItem,
+  BenchmarkRun,
+  BenchmarkMatch,
+  BenchmarkMiss,
+} from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../lib/api';
 import {
   PageTitle,
@@ -53,7 +58,7 @@ export default function BenchmarkPage() {
             lastRun: {
               runId: 101,
               precision: 0.85,
-              recall: 0.80,
+              recall: 0.8,
               f1: 0.824,
               reviewStatus: 'human_confirmed',
               createdAt: new Date().toISOString(),
@@ -159,7 +164,10 @@ export default function BenchmarkPage() {
                 {c.lastRun ? (
                   <div className="flex items-center gap-3 text-[10px] font-mono">
                     <span className="text-emerald-400">
-                      F1: {c.lastRun.f1 !== null && c.lastRun.f1 !== undefined ? `${Math.round(c.lastRun.f1 * 100)}%` : 'N/A'}
+                      F1:{' '}
+                      {c.lastRun.f1 !== null && c.lastRun.f1 !== undefined
+                        ? `${Math.round(c.lastRun.f1 * 100)}%`
+                        : 'N/A'}
                     </span>
                     <span className="text-vault-text-dim">
                       P: {c.lastRun.precision ? `${Math.round(c.lastRun.precision * 100)}%` : 'N/A'}
@@ -169,9 +177,7 @@ export default function BenchmarkPage() {
                     </span>
                   </div>
                 ) : (
-                  <span className="text-[10px] font-mono text-vault-text-dim">
-                    No run executed
-                  </span>
+                  <span className="text-[10px] font-mono text-vault-text-dim">No run executed</span>
                 )}
 
                 <button
@@ -199,9 +205,7 @@ export default function BenchmarkPage() {
               <div className="text-[9px] font-mono uppercase tracking-widest text-vault-text-dim mb-1">
                 Evaluation Case Details
               </div>
-              <h2 className="text-base font-bold font-mono text-vault-text">
-                {selectedCase.name}
-              </h2>
+              <h2 className="text-base font-bold font-mono text-vault-text">{selectedCase.name}</h2>
             </div>
             <button
               type="button"
@@ -218,13 +222,17 @@ export default function BenchmarkPage() {
             <div className="rounded border border-vault-border bg-vault-bg/60 p-3">
               <div className="text-[9px] font-mono uppercase text-vault-text-dim">Precision</div>
               <div className="text-xl font-bold font-mono text-vault-text mt-1">
-                {selectedCase.lastRun?.precision ? `${Math.round(selectedCase.lastRun.precision * 100)}%` : '—'}
+                {selectedCase.lastRun?.precision
+                  ? `${Math.round(selectedCase.lastRun.precision * 100)}%`
+                  : '—'}
               </div>
             </div>
             <div className="rounded border border-vault-border bg-vault-bg/60 p-3">
               <div className="text-[9px] font-mono uppercase text-vault-text-dim">Recall</div>
               <div className="text-xl font-bold font-mono text-vault-text mt-1">
-                {selectedCase.lastRun?.recall ? `${Math.round(selectedCase.lastRun.recall * 100)}%` : '—'}
+                {selectedCase.lastRun?.recall
+                  ? `${Math.round(selectedCase.lastRun.recall * 100)}%`
+                  : '—'}
               </div>
             </div>
             <div className="rounded border border-vault-border bg-vault-bg/60 p-3">
@@ -234,7 +242,9 @@ export default function BenchmarkPage() {
               </div>
             </div>
             <div className="rounded border border-vault-border bg-vault-bg/60 p-3">
-              <div className="text-[9px] font-mono uppercase text-vault-text-dim">Gold Standard Count</div>
+              <div className="text-[9px] font-mono uppercase text-vault-text-dim">
+                Gold Standard Count
+              </div>
               <div className="text-xl font-bold font-mono text-vault-text mt-1">
                 {selectedCase.goldCount}
               </div>
@@ -247,9 +257,18 @@ export default function BenchmarkPage() {
               Benchmark Verification Methodology
             </div>
             <ul className="text-vault-text-muted space-y-1 text-xs">
-              <li>• Precision: Ratio of correctly predicted decisions confirmed against gold standard records.</li>
-              <li>• Recall: Percentage of reference historical decisions successfully recovered from raw discussion text.</li>
-              <li>• Evidence Lock Integrity: Candidate quotes must exactly match original comment tokens or fail evaluation.</li>
+              <li>
+                • Precision: Ratio of correctly predicted decisions confirmed against gold standard
+                records.
+              </li>
+              <li>
+                • Recall: Percentage of reference historical decisions successfully recovered from
+                raw discussion text.
+              </li>
+              <li>
+                • Evidence Lock Integrity: Candidate quotes must exactly match original comment
+                tokens or fail evaluation.
+              </li>
             </ul>
           </div>
         </div>

@@ -64,7 +64,10 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json();
 }
 
-async function get<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
+async function get<T>(
+  path: string,
+  params?: Record<string, string | number | undefined>,
+): Promise<T> {
   const url = new URL(path, window.location.origin);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -93,19 +96,16 @@ export const api = {
   getStatus: () => get<StatusResponse>('/api/status'),
 
   /** GET /api/overview */
-  getOverview: (repoId?: number) =>
-    get<OverviewResponse>('/api/overview', { repoId }),
+  getOverview: (repoId?: number) => get<OverviewResponse>('/api/overview', { repoId }),
 
   /** GET /api/repositories */
   getRepositories: () => get<RepositoriesResponse>('/api/repositories'),
 
   /** POST /api/imports */
-  importRepository: (data: ImportRequest) =>
-    post<JobAcceptedResponse>('/api/imports', data),
+  importRepository: (data: ImportRequest) => post<JobAcceptedResponse>('/api/imports', data),
 
   /** POST /api/extract */
-  extractDecisions: (data: ExtractRequest) =>
-    post<JobAcceptedResponse>('/api/extract', data),
+  extractDecisions: (data: ExtractRequest) => post<JobAcceptedResponse>('/api/extract', data),
 
   /** GET /api/jobs/:id */
   getJob: (id: number) => get<Job>(`/api/jobs/${id}`),
@@ -135,8 +135,7 @@ export const api = {
   ask: (data: AskRequest) => post<AskResponse>('/api/ask', data),
 
   /** GET /api/code/tree — Code file tree (not yet implemented) */
-  getCodeTree: (repoId?: number) =>
-    get<CodeTreeResponse>('/api/code/tree', { repoId }),
+  getCodeTree: (repoId?: number) => get<CodeTreeResponse>('/api/code/tree', { repoId }),
 
   /** GET /api/code/why — File-to-decision lookup (not yet implemented) */
   getCodeWhy: (repoId: number, path: string) =>
@@ -151,32 +150,27 @@ export const api = {
     post<void>('/api/radar/recheck', data),
 
   /** GET /api/timeline/:decisionId (not yet implemented) */
-  getTimeline: (decisionId: number) =>
-    get<TimelineResponse>(`/api/timeline/${decisionId}`),
+  getTimeline: (decisionId: number) => get<TimelineResponse>(`/api/timeline/${decisionId}`),
 
   /** GET /api/relationships (not yet implemented) */
   getRelationships: (decisionId: number) =>
     get<RelationshipsResponse>('/api/relationships', { decisionId }),
 
   /** POST /api/sandbox/prior-art (not yet implemented) */
-  runPriorArt: (data: PriorArtRequest) =>
-    post<PriorArtReport>('/api/sandbox/prior-art', data),
+  runPriorArt: (data: PriorArtRequest) => post<PriorArtReport>('/api/sandbox/prior-art', data),
 
   /** GET /api/sandbox/reports/:id (not yet implemented) */
-  getPriorArtReport: (id: number) =>
-    get<PriorArtReport>(`/api/sandbox/reports/${id}`),
+  getPriorArtReport: (id: number) => get<PriorArtReport>(`/api/sandbox/reports/${id}`),
 
   /** GET /api/benchmark/cases (not yet implemented) */
-  getBenchmarkCases: () =>
-    get<BenchmarkCasesResponse>('/api/benchmark/cases'),
+  getBenchmarkCases: () => get<BenchmarkCasesResponse>('/api/benchmark/cases'),
 
   /** POST /api/benchmark/run (not yet implemented) */
   runBenchmark: (data: BenchmarkRunRequest) =>
     post<BenchmarkRunAcceptedResponse>('/api/benchmark/run', data),
 
   /** GET /api/benchmark/runs/:id (not yet implemented) */
-  getBenchmarkRun: (id: number) =>
-    get<BenchmarkRun>(`/api/benchmark/runs/${id}`),
+  getBenchmarkRun: (id: number) => get<BenchmarkRun>(`/api/benchmark/runs/${id}`),
 
   /** POST /api/benchmark/runs/:id/confirm (not yet implemented) */
   confirmBenchmark: (id: number, data: BenchmarkConfirmRequest) =>

@@ -106,7 +106,9 @@ export function useJobPolling(
     };
 
     poll();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [jobId, interval]);
 
   return { job, error };

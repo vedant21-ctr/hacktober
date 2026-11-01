@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Repository, DecisionCard, DecisionDetail, TimelineEvent } from '@decisionvault/shared/api';
+import type {
+  Repository,
+  DecisionCard,
+  DecisionDetail,
+  TimelineEvent,
+} from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../lib/api';
 import {
   PageTitle,
@@ -36,12 +41,15 @@ export default function DecisionTimelinePage() {
   const [apiNotice, setApiNotice] = useState(false);
 
   useEffect(() => {
-    api.getRepositories().then((d) => {
-      setRepos(d.items);
-      if (d.items.length > 0) {
-        setSelectedRepoId(d.items[0].id);
-      }
-    }).catch(() => {});
+    api
+      .getRepositories()
+      .then((d) => {
+        setRepos(d.items);
+        if (d.items.length > 0) {
+          setSelectedRepoId(d.items[0].id);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -142,18 +150,48 @@ export default function DecisionTimelinePage() {
   function getEventTypeStyle(type: string) {
     switch (type.toLowerCase()) {
       case 'proposal':
-        return { color: 'text-sky-400', border: 'border-sky-500/40', bg: 'bg-sky-500/10', icon: '▸' };
+        return {
+          color: 'text-sky-400',
+          border: 'border-sky-500/40',
+          bg: 'bg-sky-500/10',
+          icon: '▸',
+        };
       case 'objection':
-        return { color: 'text-amber-400', border: 'border-amber-500/40', bg: 'bg-amber-500/10', icon: '⚠' };
+        return {
+          color: 'text-amber-400',
+          border: 'border-amber-500/40',
+          bg: 'bg-amber-500/10',
+          icon: '⚠',
+        };
       case 'support':
-        return { color: 'text-emerald-400', border: 'border-emerald-500/40', bg: 'bg-emerald-500/10', icon: '✓' };
+        return {
+          color: 'text-emerald-400',
+          border: 'border-emerald-500/40',
+          bg: 'bg-emerald-500/10',
+          icon: '✓',
+        };
       case 'rejection':
-        return { color: 'text-rose-400', border: 'border-rose-500/40', bg: 'bg-rose-500/10', icon: '✕' };
+        return {
+          color: 'text-rose-400',
+          border: 'border-rose-500/40',
+          bg: 'bg-rose-500/10',
+          icon: '✕',
+        };
       case 'clarification':
-        return { color: 'text-purple-400', border: 'border-purple-500/40', bg: 'bg-purple-500/10', icon: 'ℹ' };
+        return {
+          color: 'text-purple-400',
+          border: 'border-purple-500/40',
+          bg: 'bg-purple-500/10',
+          icon: 'ℹ',
+        };
       case 'decision':
       default:
-        return { color: 'text-vault-accent', border: 'border-vault-accent/40', bg: 'bg-vault-accent/10', icon: '◈' };
+        return {
+          color: 'text-vault-accent',
+          border: 'border-vault-accent/40',
+          bg: 'bg-vault-accent/10',
+          icon: '◈',
+        };
     }
   }
 
@@ -215,9 +253,7 @@ export default function DecisionTimelinePage() {
           <h2 className="text-base font-bold font-mono text-vault-text">
             {selectedDecision.title}
           </h2>
-          <p className="text-xs text-vault-text-dim leading-relaxed">
-            {selectedDecision.summary}
-          </p>
+          <p className="text-xs text-vault-text-dim leading-relaxed">{selectedDecision.summary}</p>
         </div>
       )}
 
@@ -252,7 +288,8 @@ export default function DecisionTimelinePage() {
                       </span>
                       {ev.author && (
                         <span className="text-vault-text font-medium">
-                          {ev.author} {ev.role && <span className="text-vault-text-dim">({ev.role})</span>}
+                          {ev.author}{' '}
+                          {ev.role && <span className="text-vault-text-dim">({ev.role})</span>}
                         </span>
                       )}
                     </div>

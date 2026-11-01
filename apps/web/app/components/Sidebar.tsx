@@ -52,9 +52,7 @@ const navigation: NavSection[] = [
   },
   {
     title: 'SYSTEM',
-    items: [
-      { label: 'System Status', href: '/status', icon: '●', implemented: true },
-    ],
+    items: [{ label: 'System Status', href: '/status', icon: '●', implemented: true }],
   },
 ];
 
@@ -114,7 +112,9 @@ export default function Sidebar() {
                   >
                     <span
                       className={`font-mono text-[11px] w-4 text-center flex-shrink-0 ${
-                        active ? 'text-vault-accent' : 'text-vault-text-dim group-hover:text-vault-text-muted'
+                        active
+                          ? 'text-vault-accent'
+                          : 'text-vault-text-dim group-hover:text-vault-text-muted'
                       }`}
                     >
                       {item.icon}
@@ -164,7 +164,12 @@ export default function Sidebar() {
         aria-label="Open navigation"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
         </svg>
       </button>
 

@@ -3,13 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Repository, DecisionCard, DecisionDetail, Evidence } from '@decisionvault/shared/api';
 import { api } from '../lib/api';
-import {
-  PageTitle,
-  EvidenceChip,
-  EmptyState,
-  ErrorDisplay,
-  SkeletonCard,
-} from '../components/ui';
+import { PageTitle, EvidenceChip, EmptyState, ErrorDisplay, SkeletonCard } from '../components/ui';
 
 interface EvidenceWithContext extends Evidence {
   decisionId: number;
@@ -200,7 +194,9 @@ export default function EvidenceArchivePage() {
         </div>
       </div>
 
-      {error && <ErrorDisplay title="Evidence Loading Error" message={error} onRetry={loadAllEvidence} />}
+      {error && (
+        <ErrorDisplay title="Evidence Loading Error" message={error} onRetry={loadAllEvidence} />
+      )}
 
       {/* ── Loading Skeleton ───────────────────────────────────────────────── */}
       {loading && (
@@ -289,9 +285,7 @@ export default function EvidenceArchivePage() {
               : 'Try clearing your search query or adjusting the evidence status filters.'
           }
           action={
-            evidenceList.length === 0
-              ? { label: 'Import Repository', href: '/import' }
-              : undefined
+            evidenceList.length === 0 ? { label: 'Import Repository', href: '/import' } : undefined
           }
         />
       )}

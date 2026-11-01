@@ -1,463 +1,639 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Repository, DecisionCard, PriorArtReport, PriorArtItem } from '@decisionvault/shared/api';
-import { api, ApiClientError } from '../lib/api';
-import {
-  PageTitle,
-  Card,
-  StatusBadge,
-  ConfidenceMeter,
-  EmptyState,
-  ErrorDisplay,
-  FeatureNotice,
-  EvidenceChip,
-} from '../components/ui';
-
-interface PresetScenario {
-  name: string;
-  repoMatch: string;
-  title: string;
-  description: string;
-  changedPaths: string[];
-}
-
-const PRESET_SCENARIOS: PresetScenario[] = [
-  {
-    name: 'Scenario 1: Switch SQLite storage to external DB',
-    repoMatch: 'hacktober',
-    title: 'Migrate decision storage from SQLite to MongoDB/PostgreSQL',
-    description:
-      'Replace SQLite schema with distributed document store for scaling decision extraction across clusters.',
-    changedPaths: ['server/db/index.ts', 'server/db/schema.sql'],
-  },
-  {
-    name: 'Scenario 2: Introduce Cloud LLM Fallback (OpenAI/Anthropic)',
-    repoMatch: 'hacktober',
-    title: 'Add cloud LLM fallback when local Ollama is offline',
-    description:
-      'Route decision extraction to OpenAI GPT-4o or Claude 3.5 Sonnet if Gemma 4 E4B is unavailable or overloaded.',
-    changedPaths: ['server/llm/ollama.ts', 'server/extract/service.ts'],
-  },
-  {
-    name: 'Scenario 3: Relax Evidence Lock matching to semantic embeddings',
-    repoMatch: 'hacktober',
-    title: 'Use vector cosine similarity instead of exact token normalization for claims',
-    description:
-      'Allow approximate semantic matches for evidence quotes to increase extraction yield.',
-    changedPaths: ['server/verify/evidenceLock.ts', 'shared/normalize.ts'],
-  },
-];
+import type {
+  PriorArtReport,
+  PriorArtItem,
+  Repository,
+  CodeTreeNode,
+  DecisionDetail,
+} from '@decisionvault/shared/api';
+import type { PriorArtInputType } from '@decisionvault/shared/enums';
 
 export default function PriorArtPage() {
-  const [repos, setRepos] = useState<Repository[]>([]);
-  const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
-  const [prTitle, setPrTitle] = useState('');
-  const [prDescription, setPrDescription] = useState('');
-  const [changedPathsText, setChangedPathsText] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [apiPendingNotice, setApiPendingNotice] = useState(false);
-  const [analysisReport, setAnalysisReport] = useState<PriorArtReport | null>(null);
-  const [matchedDecisions, setMatchedDecisions] = useState<{
-    decision: DecisionCard;
-    matchedFile: string;
-    relation: 'conflicts_with' | 'supersedes' | 'related_to';
-    reasons: string[];
-  }[]>([]);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [selectedRepoId, setSelectedRepoId] = useState<string>('');
+  const [mappedFiles, setMappedFiles] = useState<CodeTreeNode[]>([]);
+  const [inputType, setInputType] = useState<PriorArtInputType>('pr');
+  const [inputValue, setInputValue] = useState<string>('');
+  const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [report, setReport] = useState<PriorArtReport | null>(null);
+
+  // Decision detail modal state
+  const [selectedDecision, setSelectedDecision] = useState<DecisionDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadRepositories();
+    fetchRepositories();
   }, []);
 
-  async function loadRepositories() {
+  useEffect(() => {
+    if (selectedRepoId) {
+      fetchMappedFiles(parseInt(selectedRepoId, 10));
+    } else {
+      setMappedFiles([]);
+    }
+  }, [selectedRepoId]);
+
+  async function fetchRepositories() {
     try {
-      const data = await api.getRepositories();
-      setRepos(data.items);
-      if (data.items.length > 0) {
-        setSelectedRepoId(data.items[0].id);
+      const res = await fetch('/api/repositories');
+      if (res.ok) {
+        const data = await res.json();
+        const repos: Repository[] = data.items || [];
+        setRepositories(repos);
+        if (repos.length > 0 && !selectedRepoId) {
+          setSelectedRepoId(String(repos[0].id));
+        }
       }
-    } catch {
-      // Repositories will show empty or load on retry
+    } catch (err) {
+      console.error('Failed to load repositories:', err);
     }
   }
 
-  function applyPreset(scenario: PresetScenario) {
-    setPrTitle(scenario.title);
-    setPrDescription(scenario.description);
-    setChangedPathsText(scenario.changedPaths.join('\n'));
-    setAnalysisReport(null);
-    setMatchedDecisions([]);
-    setApiPendingNotice(false);
+  async function fetchMappedFiles(repoId: number) {
+    try {
+      const res = await fetch(`/api/code/tree?repoId=${repoId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMappedFiles(data.nodes || []);
+      }
+    } catch (err) {
+      console.error('Failed to load mapped files:', err);
+    }
   }
 
-  async function runPriorArtAnalysis(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    if (!selectedRepoId) return;
+  function handleSelectMappedFile(filePath: string) {
+    if (inputType === 'pr' || inputType === 'idea') {
+      if (!inputValue.includes(filePath)) {
+        setInputValue((prev) => (prev ? `${prev}\n${filePath}` : filePath));
+      }
+    } else {
+      // diff mode
+      const snippet = `diff --git a/${filePath} b/${filePath}\n--- a/${filePath}\n+++ b/${filePath}\n@@ -1,3 +1,4 @@\n+// simulated change`;
+      setInputValue((prev) => (prev ? `${prev}\n\n${snippet}` : snippet));
+    }
+  }
 
-    const changedPaths = changedPathsText
-      .split('\n')
-      .map((p) => p.trim())
-      .filter((p) => p.length > 0);
-
-    if (changedPaths.length === 0) {
-      setError('Please provide at least one changed file path.');
+  async function handleAnalyze(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedRepoId) {
+      setError('Please select an imported repository.');
+      return;
+    }
+    if (!inputValue.trim()) {
+      setError('Please provide changed file paths, diff, or proposed change description.');
       return;
     }
 
-    setIsAnalyzing(true);
+    setAnalyzing(true);
     setError(null);
-    setApiPendingNotice(false);
-    setAnalysisReport(null);
-    setMatchedDecisions([]);
+    setReport(null);
 
     try {
-      // 1. Attempt official Phase 4 API endpoint: POST /api/sandbox/prior-art
-      const report = await api.runPriorArt({
-        repoId: selectedRepoId,
+      const payload = {
+        repoId: parseInt(selectedRepoId, 10),
         input: {
-          type: 'pr',
-          value: JSON.stringify({
-            title: prTitle,
-            description: prDescription,
-            changedPaths,
-          }),
+          type: inputType,
+          value: inputValue.trim(),
         },
+      };
+
+      const res = await fetch('/api/sandbox/prior-art', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      setAnalysisReport(report);
-    } catch (err) {
-      // When backend returns 501 NOT_IMPLEMENTED (as specified in Problem Statement & prompt)
-      if (err instanceof ApiClientError && err.status === 501) {
-        setApiPendingNotice(true);
-        // Fallback: Perform client-side historical lookup using live recovered decisions & files
-        await runClientForensicMatching(selectedRepoId, changedPaths);
-      } else {
-        setError(err instanceof Error ? err.message : 'Prior-art analysis failed');
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || `Failed to analyze (HTTP ${res.status})`);
       }
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }
 
-  async function runClientForensicMatching(repoId: number, paths: string[]) {
-    try {
-      // Retrieve real decisions from the active repository
-      const decisionsData = await api.getDecisions({ repoId, pageSize: 50 });
-      const matches: {
-        decision: DecisionCard;
-        matchedFile: string;
-        relation: 'conflicts_with' | 'supersedes' | 'related_to';
-        reasons: string[];
-      }[] = [];
+      const { jobId } = await res.json();
 
-      // Inspect decisions to find matches based on keywords or file associations
-      for (const dec of decisionsData.items) {
-        try {
-          const detail = await api.getDecisionDetail(dec.id);
-          for (const path of paths) {
-            const pathLower = path.toLowerCase();
-            const associatedFile = detail.files.find(
-              (f) =>
-                f.path.toLowerCase().includes(pathLower) ||
-                pathLower.includes(f.path.toLowerCase()) ||
-                f.basis.toLowerCase().includes('database') ||
-                f.basis.toLowerCase().includes('llm') ||
-                f.basis.toLowerCase().includes('evidence'),
-            );
+      // Poll report endpoint until report is ready
+      let attempts = 0;
+      const maxAttempts = 15;
+      while (attempts < maxAttempts) {
+        attempts++;
+        await new Promise((r) => setTimeout(r, 600));
 
-            // Check if PR title or changed path matches decision context
-            const titleMatch =
-              (prTitle.toLowerCase().includes('db') || prTitle.toLowerCase().includes('sqlite')) &&
-              dec.title.toLowerCase().includes('sqlite');
-            const llmMatch =
-              (prTitle.toLowerCase().includes('cloud') || prTitle.toLowerCase().includes('openai')) &&
-              (dec.title.toLowerCase().includes('gemma') || dec.title.toLowerCase().includes('local'));
-            const lockMatch =
-              prTitle.toLowerCase().includes('vector') &&
-              (dec.title.toLowerCase().includes('evidence') || dec.title.toLowerCase().includes('lock'));
-
-            if (associatedFile || titleMatch || llmMatch || lockMatch) {
-              const isConflict =
-                titleMatch ||
-                llmMatch ||
-                lockMatch ||
-                dec.status === 'accepted' ||
-                dec.title.toLowerCase().includes('zero cloud');
-
-              matches.push({
-                decision: dec,
-                matchedFile: associatedFile ? associatedFile.path : path,
-                relation: isConflict ? 'conflicts_with' : 'related_to',
-                reasons: [
-                  associatedFile
-                    ? `File mapped via ${associatedFile.linkKind.toUpperCase()}: "${associatedFile.basis}"`
-                    : `Direct semantic match on proposal keywords (${path})`,
-                  `Historical status: ${dec.status.toUpperCase()} (Confidence ${Math.round(dec.confidence * 100)}%)`,
-                  `Evidence Lock verification ratio: ${Math.round(dec.verifiedRatio * 100)}%`,
-                ],
-              });
-              break;
-            }
-          }
-        } catch {
-          // continue checking other decisions
+        const reportRes = await fetch(`/api/sandbox/reports/${jobId}`);
+        if (reportRes.status === 200) {
+          const reportData: PriorArtReport = await reportRes.json();
+          setReport(reportData);
+          break;
+        } else if (reportRes.status === 202) {
+          // Still running, continue polling
+          continue;
+        } else {
+          const errData = await reportRes.json().catch(() => ({}));
+          throw new Error(
+            errData.error?.message || `Report fetch failed with HTTP ${reportRes.status}`,
+          );
         }
       }
 
-      setMatchedDecisions(matches);
-    } catch {
-      // Fallback matching error
+      if (attempts >= maxAttempts) {
+        throw new Error('Prior art analysis timed out while generating report.');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Analysis failed');
+    } finally {
+      setAnalyzing(false);
     }
   }
 
-  const changedPathsList = changedPathsText
-    .split('\n')
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0);
+  async function openDecisionDetail(id: number) {
+    setLoadingDetail(true);
+    setDetailError(null);
+    try {
+      const res = await fetch(`/api/decisions/${id}`);
+      if (res.ok) {
+        const detail: DecisionDetail = await res.json();
+        setSelectedDecision(detail);
+      } else {
+        setDetailError(`Failed to load decision detail (HTTP ${res.status})`);
+      }
+    } catch (err) {
+      setDetailError(err instanceof Error ? err.message : 'Error fetching decision');
+    } finally {
+      setLoadingDetail(false);
+    }
+  }
+
+  function getRelationBadge(relation: string) {
+    if (relation === 'conflicts') {
+      return (
+        <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+          CONFLICTS
+        </span>
+      );
+    }
+    if (relation === 'related') {
+      return (
+        <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+          RELATED
+        </span>
+      );
+    }
+    return (
+      <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400">
+        {relation}
+      </span>
+    );
+  }
+
+  const conflictsCount = report?.items.filter((i) => i.relation === 'conflicts').length || 0;
+  const relatedCount = report?.items.filter((i) => i.relation === 'related').length || 0;
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-5xl">
-      <PageTitle
-        title="Prior-Art Detection"
-        subtitle="Phase 4 Intelligence — Surface historical engineering decisions and rejected alternatives before introducing conflicting pull requests."
-        badge="PHASE 4"
-      />
-
-      {/* Preset Demo Scenarios */}
-      <div className="rounded-lg border border-vault-accent/30 bg-vault-accent/5 p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-vault-accent font-semibold">
-            ⚡ Quick-Demo Simulation Presets
-          </span>
-          <span className="text-[10px] font-mono text-vault-text-dim">1-Click Live Test</span>
+    <div className="space-y-8">
+      {/* Simulation Banner & Header */}
+      <div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-mono text-amber-300 mb-3">
+          <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          SIMULATED PR ANALYSIS — Grounded in recovered decisions &amp; verified evidence
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          {PRESET_SCENARIOS.map((scenario, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => applyPreset(scenario)}
-              className="text-left p-2.5 rounded border border-vault-border bg-vault-surface/40 hover:border-vault-accent hover:bg-vault-accent/10 transition-colors"
-            >
-              <div className="text-xs font-semibold text-vault-text font-mono truncate">
-                {scenario.name}
-              </div>
-              <div className="text-[10px] text-vault-text-dim mt-1 truncate">
-                {scenario.changedPaths.join(', ')}
-              </div>
-            </button>
-          ))}
-        </div>
+        <h1 className="text-xl font-bold text-slate-100 font-mono tracking-tight">
+          Prior-Art Detection
+        </h1>
+        <p className="mt-1 text-xs text-slate-400 max-w-3xl">
+          Evaluate proposed code changes against historical consensus, deprecation decisions, and
+          previously rejected alternatives before writing or merging code.
+        </p>
       </div>
 
-      {/* PR Input Form */}
-      <div className="rounded-lg border border-vault-border bg-vault-surface/30 p-6">
-        <div className="text-[9px] font-mono uppercase tracking-widest text-vault-text-dim mb-4">
-          Simulated Pull Request Input
-        </div>
-
-        <form onSubmit={runPriorArtAnalysis} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Input / Simulation Form */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-5">
+        <form onSubmit={handleAnalyze} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-mono text-vault-text-dim mb-1.5">
-                Target Repository
+              <label className="block text-xs font-mono text-slate-400 mb-1">
+                Select Imported Repository
               </label>
               <select
-                value={selectedRepoId || ''}
-                onChange={(e) => setSelectedRepoId(Number(e.target.value))}
-                className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault"
+                value={selectedRepoId}
+                onChange={(e) => setSelectedRepoId(e.target.value)}
+                className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
               >
-                {repos.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.fullName}
-                  </option>
-                ))}
+                {repositories.length === 0 ? (
+                  <option value="">No repositories imported yet</option>
+                ) : (
+                  repositories.map((repo) => (
+                    <option key={repo.id} value={repo.id}>
+                      {repo.fullName} ({repo.defaultBranch})
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-[10px] font-mono text-vault-text-dim mb-1.5">
-                Proposed PR Title
+            <div>
+              <label className="block text-xs font-mono text-slate-400 mb-1">
+                Simulation Input Mode
               </label>
-              <input
-                type="text"
-                value={prTitle}
-                onChange={(e) => setPrTitle(e.target.value)}
-                placeholder="e.g. Migrate database schema to MongoDB"
-                className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault placeholder-vault-text-dim"
-              />
+              <div className="flex gap-2">
+                {(['pr', 'diff', 'idea'] as PriorArtInputType[]).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setInputType(t)}
+                    className={`flex-1 py-1.5 px-3 rounded text-xs font-mono font-semibold transition ${
+                      inputType === t
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                    }`}
+                  >
+                    {t === 'pr' ? 'PR / Files' : t === 'diff' ? 'Git Diff' : 'Idea / Concept'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
+          {/* Quick Select Mapped Files */}
+          {mappedFiles.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-mono text-slate-400">
+                  Quick Select Mapped Files in this Repository:
+                </span>
+                <span className="text-[10px] font-mono text-slate-500">
+                  {mappedFiles.length} mapped files available
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 rounded border border-slate-800 bg-slate-950/60">
+                {mappedFiles.slice(0, 16).map((node) => (
+                  <button
+                    key={node.path}
+                    type="button"
+                    onClick={() => handleSelectMappedFile(node.path)}
+                    className="rounded bg-slate-800/80 hover:bg-slate-700 px-2 py-0.5 text-[10px] font-mono text-slate-300 hover:text-emerald-300 transition"
+                  >
+                    {node.path} ({node.decisionCount})
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
-            <label className="block text-[10px] font-mono text-vault-text-dim mb-1.5">
-              PR Description &amp; Engineering Rationale
+            <label className="block text-xs font-mono text-slate-400 mb-1">
+              {inputType === 'diff'
+                ? 'Paste Git Unified Diff'
+                : inputType === 'idea'
+                  ? 'Describe Proposed Feature or Architectural Idea'
+                  : 'Enter Simulated PR Details (File paths or PR summary)'}
             </label>
             <textarea
-              rows={2}
-              value={prDescription}
-              onChange={(e) => setPrDescription(e.target.value)}
-              placeholder="Explain proposed changes, motivation, and trade-offs..."
-              className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault placeholder-vault-text-dim resize-y"
+              rows={4}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder={
+                inputType === 'diff'
+                  ? 'diff --git a/server/index.ts b/server/index.ts\n--- a/server/index.ts\n+++ b/server/index.ts\n@@ -10,3 +10,4 @@'
+                  : inputType === 'idea'
+                    ? 'Re-add cgi module to standard library for lightweight scripts'
+                    : 'Refactor auth module:\nsrc/legacy_auth.py\nsrc/oauth.ts'
+              }
+              className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-mono leading-relaxed"
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-mono text-vault-text-dim mb-1.5">
-              Changed File Paths (One per line)
-            </label>
-            <textarea
-              rows={3}
-              value={changedPathsText}
-              onChange={(e) => setChangedPathsText(e.target.value)}
-              placeholder="server/db/schema.sql&#10;server/extract/service.ts"
-              className="w-full rounded-md border border-vault-border bg-vault-bg px-3 py-2 text-xs text-vault-text font-mono focus-vault placeholder-vault-text-dim resize-y"
-            />
-          </div>
+          {error && (
+            <div className="rounded border border-rose-500/30 bg-rose-500/10 p-2.5 text-xs text-rose-300 font-mono">
+              {error}
+            </div>
+          )}
 
-          {error && <ErrorDisplay title="Analysis Error" message={error} />}
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-[10px] font-mono text-vault-text-dim">
-              {changedPathsList.length} files targeted for conflict check
-            </span>
+          <div className="flex justify-end">
             <button
               type="submit"
-              disabled={isAnalyzing || !selectedRepoId || changedPathsList.length === 0}
-              className="rounded-md bg-vault-accent/10 border border-vault-accent/40 px-5 py-2.5 text-xs font-semibold text-vault-accent hover:bg-vault-accent/20 transition-colors font-mono disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={analyzing || !selectedRepoId}
+              className="rounded bg-emerald-600 px-5 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition disabled:opacity-50 font-mono flex items-center gap-2"
             >
-              {isAnalyzing ? (
+              {analyzing ? (
                 <>
-                  <span className="h-2 w-2 rounded-full bg-vault-accent animate-ping" />
-                  Analyzing Prior-Art...
+                  <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Analyzing Prior Art...
                 </>
               ) : (
-                '⚡ Run Prior-Art Detection'
+                'Run Simulated PR Analysis'
               )}
             </button>
           </div>
         </form>
       </div>
 
-      {/* Phase 4 Backend Rollout Status Notice */}
-      {apiPendingNotice && (
-        <FeatureNotice
-          feature="Phase 4 Backend Endpoint (POST /api/sandbox/prior-art)"
-          description="The backend implementation of Phase 4 is currently in development. DecisionVault's frontend has completed the full UI integration and conducted a deterministic forensic match against active SQLite decisions and code mappings."
-        />
-      )}
-
       {/* Analysis Results */}
-      {(analysisReport || matchedDecisions.length > 0) && (
+      {report && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-vault-border pb-3">
-            <div>
-              <h2 className="text-lg font-bold font-mono text-vault-text">
-                Prior-Art Detection Results
-              </h2>
-              <p className="text-xs text-vault-text-dim mt-0.5">
-                Evaluated against historical decisions recorded in DecisionVault
-              </p>
+          {/* Summary Banner */}
+          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div>
+                <span className="text-[10px] font-mono uppercase text-slate-500">
+                  Simulation Summary
+                </span>
+                <h2 className="text-sm font-semibold text-slate-100 font-mono">
+                  {report.input.summary}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2">
+                {conflictsCount > 0 ? (
+                  <span className="rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-1 text-xs font-mono font-bold">
+                    {conflictsCount} Potential Conflict{conflictsCount > 1 ? 's' : ''}
+                  </span>
+                ) : (
+                  <span className="rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 text-xs font-mono font-bold">
+                    0 Conflicts
+                  </span>
+                )}
+                <span className="rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-1 text-xs font-mono font-bold">
+                  {relatedCount} Related Decision{relatedCount > 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
-            <span className="rounded bg-vault-surface border border-vault-border px-2.5 py-1 text-[10px] font-mono text-vault-text-muted">
-              {matchedDecisions.length} Matches Found
-            </span>
-          </div>
 
-          {/* Matched Decision Cards */}
-          <div className="space-y-4">
-            {matchedDecisions.map((match, idx) => {
-              const isConflict = match.relation === 'conflicts_with';
-              return (
-                <div
-                  key={idx}
-                  className={`rounded-lg border p-5 transition-all ${
-                    isConflict
-                      ? 'border-amber-500/40 bg-amber-500/5'
-                      : 'border-vault-border bg-vault-surface/30'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono border-t border-slate-800/80 pt-3">
+              <div>
+                <span className="text-slate-500">
+                  Detected Changed Paths ({report.changedPaths.length}):
+                </span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {report.changedPaths.length === 0 ? (
+                    <span className="text-slate-500 italic">No specific file paths detected</span>
+                  ) : (
+                    report.changedPaths.map((p) => {
+                      const isMapped = mappedFiles.some((mf) => mf.path === p);
+                      return (
                         <span
-                          className={`rounded px-2 py-0.5 text-[9px] font-mono font-bold uppercase border ${
-                            isConflict
-                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                              : 'bg-vault-surface text-vault-steel border-vault-border'
+                          key={p}
+                          className={`rounded px-1.5 py-0.5 text-[11px] ${
+                            isMapped
+                              ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                              : 'bg-slate-800 text-slate-400'
                           }`}
                         >
-                          {isConflict ? '⚠ Potential Conflict Detected' : 'ℹ Historical Precedent'}
+                          {p} {isMapped ? '✓' : '(unmapped)'}
                         </span>
-                        <span className="text-[10px] font-mono text-vault-text-dim">
-                          Matched File: <code className="text-vault-accent">{match.matchedFile}</code>
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-bold font-mono text-vault-text">
-                        <a
-                          href={`/decisions/${match.decision.id}`}
-                          className="hover:text-vault-accent underline decoration-vault-border hover:decoration-vault-accent"
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-slate-500">
+                  Detected Concepts ({report.concepts.length}):
+                </span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {report.concepts.length === 0 ? (
+                    <span className="text-slate-500 italic">No specific concepts</span>
+                  ) : (
+                    report.concepts.map((c) => (
+                      <span
+                        key={c}
+                        className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300"
+                      >
+                        #{c}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-slate-400 italic border-t border-slate-800/60 pt-2">
+              {report.note}
+            </p>
+          </div>
+
+          {/* Conflict Warning Notice */}
+          {conflictsCount > 0 && (
+            <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-4 text-xs font-mono">
+              <div className="flex items-center gap-2 text-rose-300 font-bold mb-1">
+                <span className="text-base">⚠</span>
+                Attention: Potential Historical Conflicts Detected ({conflictsCount})
+              </div>
+              <p className="text-rose-200/80 leading-relaxed">
+                The proposed change touches files or concepts that contradict prior accepted
+                decisions or previously rejected alternatives. Review the grounding evidence below
+                to understand the historical rationale and conditions before proceeding.
+              </p>
+            </div>
+          )}
+
+          {/* Matched Prior-Art Items */}
+          {report.items.length === 0 ? (
+            <div className="rounded-lg border border-slate-800 bg-slate-900/20 p-8 text-center text-xs text-slate-400 font-mono">
+              No historical decisions or rejected alternatives match the specified files.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">
+                Historical Decisions &amp; Prior-Art Evidence ({report.items.length})
+              </div>
+
+              {report.items.map((item, idx) => (
+                <div
+                  key={idx}
+                  className={`rounded-lg border p-4.5 transition ${
+                    item.relation === 'conflicts'
+                      ? 'border-rose-500/40 bg-slate-900/60'
+                      : 'border-slate-800 bg-slate-900/40'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-2.5">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {getRelationBadge(item.relation)}
+                        <button
+                          type="button"
+                          onClick={() => openDecisionDetail(item.decision.id)}
+                          className="text-sm font-bold text-slate-100 hover:text-emerald-400 font-mono text-left transition"
                         >
-                          {match.decision.title}
-                        </a>
-                      </h3>
+                          {item.decision.title}
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-400 font-mono mb-2">
+                        {item.decision.summary}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={match.decision.status} />
-                      <ConfidenceMeter value={match.decision.confidence} />
+
+                    <div className="text-right font-mono text-xs text-slate-500">
+                      <div>Confidence: {Math.round(item.decision.confidence * 100)}%</div>
+                      <div>Evidence Ratio: {Math.round(item.decision.verifiedRatio * 100)}%</div>
                     </div>
                   </div>
 
-                  <p className="text-xs text-vault-text-dim leading-relaxed mb-4">
-                    {match.decision.summary}
-                  </p>
+                  {/* Grounded Reason */}
+                  <div className="rounded border border-slate-800 bg-slate-950 p-2.5 text-xs font-mono mb-3">
+                    <span className="font-semibold text-slate-300">Surfaced Reason:</span>{' '}
+                    <span className="text-slate-400">{item.reason}</span>
+                  </div>
 
-                  <div className="rounded border border-vault-border/60 bg-vault-bg/60 p-3 space-y-2">
-                    <div className="text-[9px] font-mono uppercase tracking-wider text-vault-text-dim">
-                      Why this decision was surfaced:
+                  {/* Prior Rejection Rationale */}
+                  {item.rejectedBecause && (
+                    <div className="rounded border border-rose-500/30 bg-rose-500/5 p-2.5 text-xs font-mono mb-3">
+                      <span className="font-semibold text-rose-300">
+                        Previously Rejected Because:
+                      </span>{' '}
+                      <span className="text-slate-300">{item.rejectedBecause}</span>
                     </div>
-                    <ul className="text-xs font-mono text-vault-text-muted space-y-1">
-                      {match.reasons.map((r, rIdx) => (
-                        <li key={rIdx} className="flex items-center gap-2">
-                          <span className="text-vault-accent text-[10px]">▸</span>
-                          <span>{r}</span>
-                        </li>
+                  )}
+
+                  {/* Reconsideration Guidance */}
+                  {item.reconsiderIf && (
+                    <div className="rounded border border-amber-500/30 bg-amber-500/5 p-2.5 text-xs font-mono mb-3">
+                      <span className="font-semibold text-amber-300">Reconsider If:</span>{' '}
+                      <span className="text-slate-300">{item.reconsiderIf}</span>
+                    </div>
+                  )}
+
+                  {/* Grounded Verified Evidence Quotes */}
+                  {item.evidence.length > 0 && (
+                    <div className="space-y-2 mt-3 pt-3 border-t border-slate-800">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
+                        Supporting Verified Evidence ({item.evidence.length})
+                      </span>
+                      {item.evidence.map((ev) => (
+                        <div
+                          key={ev.id}
+                          className="rounded border border-slate-800 bg-slate-950 p-2.5 text-xs font-mono"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-slate-400 text-[11px]">
+                              by {ev.author} ({ev.role}) • {ev.claimType}
+                            </span>
+                            <a
+                              href={ev.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-slate-500 hover:text-emerald-400"
+                            >
+                              GitHub Source ↗
+                            </a>
+                          </div>
+                          <blockquote className="italic text-slate-300 border-l-2 border-slate-700 pl-2 my-1 text-[11px]">
+                            &ldquo;{ev.quote}&rdquo;
+                          </blockquote>
+                        </div>
                       ))}
-                    </ul>
-                  </div>
+                    </div>
+                  )}
 
-                  <div className="mt-4 flex items-center justify-between text-[10px] font-mono text-vault-text-dim">
+                  {/* Source Discussion Reference */}
+                  <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-slate-500 border-t border-slate-800/60 pt-2">
+                    <span>Source: {item.decision.sourceTitle}</span>
                     <a
-                      href={match.decision.sourceUrl}
+                      href={item.decision.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-vault-accent hover:underline flex items-center gap-1"
+                      className="text-emerald-400 hover:text-emerald-300"
                     >
-                      View Original Discussion ↗
-                    </a>
-                    <a
-                      href={`/decisions/${match.decision.id}`}
-                      className="text-vault-text hover:text-vault-accent"
-                    >
-                      Inspect Evidence &amp; Alternatives →
+                      Open Discussion ↗
                     </a>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Empty State after run */}
-      {!isAnalyzing && changedPathsList.length > 0 && matchedDecisions.length === 0 && apiPendingNotice && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
-          <div className="text-emerald-400 font-mono text-sm font-semibold mb-1">
-            ✓ No Direct Conflicts Found
+      {/* Decision Detail Modal */}
+      {selectedDecision && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
+              <div>
+                <span className="text-[10px] font-mono uppercase text-slate-500">
+                  Decision #{selectedDecision.id}
+                </span>
+                <h2 className="text-lg font-bold text-slate-100 font-mono">
+                  {selectedDecision.title}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDecision(null)}
+                className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 font-mono mb-4 leading-relaxed">
+              {selectedDecision.summary}
+            </p>
+
+            {/* Alternatives */}
+            {selectedDecision.alternatives.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-xs font-mono uppercase text-slate-400 mb-2">
+                  Considered Alternatives
+                </h3>
+                <div className="space-y-2">
+                  {selectedDecision.alternatives.map((alt) => (
+                    <div
+                      key={alt.id}
+                      className="rounded border border-slate-800 bg-slate-950 p-3 text-xs font-mono"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                            alt.outcome === 'chosen'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          }`}
+                        >
+                          {alt.outcome}
+                        </span>
+                        <span className="font-semibold text-slate-200">{alt.name}</span>
+                      </div>
+                      <p className="text-slate-400 mb-1">{alt.description}</p>
+                      {alt.reason && (
+                        <p className="text-slate-300">
+                          <span className="text-slate-500 font-semibold">Reason:</span> {alt.reason}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Verified Quotes */}
+            {selectedDecision.decisionEvidence.length > 0 && (
+              <div>
+                <h3 className="text-xs font-mono uppercase text-slate-400 mb-2">
+                  Decision Evidence (Exact Quotes)
+                </h3>
+                <div className="space-y-2">
+                  {selectedDecision.decisionEvidence.map((ev) => (
+                    <div
+                      key={ev.id}
+                      className="rounded border border-slate-800 bg-slate-950 p-2.5 text-xs font-mono"
+                    >
+                      <blockquote className="italic text-slate-300 border-l-2 border-slate-700 pl-2">
+                        &ldquo;{ev.quote}&rdquo;
+                      </blockquote>
+                      <div className="mt-1 text-[10px] text-slate-500">
+                        by {ev.author} ({ev.role})
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <p className="text-xs text-vault-text-dim max-w-md mx-auto">
-            None of the supplied files (<code>{changedPathsList.slice(0, 3).join(', ')}</code>) conflict with existing recovered architectural decisions.
-          </p>
         </div>
       )}
     </div>

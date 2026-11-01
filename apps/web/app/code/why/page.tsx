@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { Repository, DecisionCard, DecisionFile, CodeWhyResponse } from '@decisionvault/shared/api';
+import type {
+  Repository,
+  DecisionCard,
+  DecisionFile,
+  CodeWhyResponse,
+} from '@decisionvault/shared/api';
 import { api, ApiClientError } from '../../lib/api';
 import {
   PageTitle,
@@ -33,12 +38,15 @@ function CodeWhyContent() {
   } | null>(null);
 
   useEffect(() => {
-    api.getRepositories().then((d) => {
-      setRepos(d.items);
-      if (!repoId && d.items.length > 0) {
-        setRepoId(String(d.items[0].id));
-      }
-    }).catch(() => {});
+    api
+      .getRepositories()
+      .then((d) => {
+        setRepos(d.items);
+        if (!repoId && d.items.length > 0) {
+          setRepoId(String(d.items[0].id));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -87,9 +95,7 @@ function CodeWhyContent() {
       try {
         const detail = await api.getDecisionDetail(dec.id);
         const match = detail.files.find(
-          (f) =>
-            f.path.toLowerCase().includes(normPath) ||
-            normPath.includes(f.path.toLowerCase()),
+          (f) => f.path.toLowerCase().includes(normPath) || normPath.includes(f.path.toLowerCase()),
         );
         if (match) {
           matchedDecisions.push(dec);
@@ -174,7 +180,9 @@ function CodeWhyContent() {
         />
       )}
 
-      {error && <ErrorDisplay title="Lookup Failed" message={error} onRetry={() => handleLookup()} />}
+      {error && (
+        <ErrorDisplay title="Lookup Failed" message={error} onRetry={() => handleLookup()} />
+      )}
 
       {/* Results */}
       {result && (
@@ -221,9 +229,7 @@ function CodeWhyContent() {
                       <StatusBadge status={dec.status} />
                     </div>
 
-                    <p className="text-xs text-vault-text-dim leading-relaxed">
-                      {dec.summary}
-                    </p>
+                    <p className="text-xs text-vault-text-dim leading-relaxed">{dec.summary}</p>
 
                     {link && (
                       <div className="text-[11px] font-mono text-vault-text-muted bg-vault-bg/60 rounded p-2.5 border border-vault-border/50">

@@ -7,7 +7,13 @@ import React from 'react';
 
 // ─── Loading States ──────────────────────────────────────────────────────────
 
-export function LoadingSpinner({ size = 'md', label }: { size?: 'sm' | 'md' | 'lg'; label?: string }) {
+export function LoadingSpinner({
+  size = 'md',
+  label,
+}: {
+  size?: 'sm' | 'md' | 'lg';
+  label?: string;
+}) {
   const sizeClasses = {
     sm: 'h-3 w-3 border',
     md: 'h-5 w-5 border-2',
@@ -111,8 +117,8 @@ export function EmptyState({
       <p className="mt-1 text-xs text-vault-text-dim leading-relaxed max-w-md mx-auto">
         {description}
       </p>
-      {action && (
-        action.href ? (
+      {action &&
+        (action.href ? (
           <a
             href={action.href}
             className="mt-4 inline-block rounded bg-vault-accent/10 border border-vault-accent/30 px-4 py-2 text-xs font-semibold text-vault-accent hover:bg-vault-accent/20 transition-colors"
@@ -126,8 +132,7 @@ export function EmptyState({
           >
             {action.label}
           </button>
-        )
-      )}
+        ))}
     </div>
   );
 }
@@ -216,16 +221,34 @@ export function ConfidenceMeter({ value, size = 'sm' }: { value: number; size?: 
 
 export function LinkKindBadge({ kind }: { kind: string }) {
   const styles: Record<string, { bg: string; text: string; label: string }> = {
-    pr_diff: { bg: 'bg-emerald-500/10 border-emerald-500/30', text: 'text-emerald-400', label: 'PR DIFF' },
-    mentioned: { bg: 'bg-vault-surface border-vault-border', text: 'text-vault-text-dim', label: 'MENTIONED' },
-    rename_tracked: { bg: 'bg-sky-500/10 border-sky-500/30', text: 'text-sky-400', label: 'RENAME TRACKED' },
-    symbol: { bg: 'bg-violet-500/10 border-violet-500/30', text: 'text-violet-400', label: 'SYMBOL' },
+    pr_diff: {
+      bg: 'bg-emerald-500/10 border-emerald-500/30',
+      text: 'text-emerald-400',
+      label: 'PR DIFF',
+    },
+    mentioned: {
+      bg: 'bg-vault-surface border-vault-border',
+      text: 'text-vault-text-dim',
+      label: 'MENTIONED',
+    },
+    rename_tracked: {
+      bg: 'bg-sky-500/10 border-sky-500/30',
+      text: 'text-sky-400',
+      label: 'RENAME TRACKED',
+    },
+    symbol: {
+      bg: 'bg-violet-500/10 border-violet-500/30',
+      text: 'text-violet-400',
+      label: 'SYMBOL',
+    },
   };
 
   const style = styles[kind] || styles.mentioned;
 
   return (
-    <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${style.bg} ${style.text}`}>
+    <span
+      className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${style.bg} ${style.text}`}
+    >
       {style.label}
     </span>
   );
@@ -257,9 +280,7 @@ export function SectionHeader({
             </span>
           )}
         </div>
-        {subtitle && (
-          <p className="mt-0.5 text-[11px] text-vault-text-dim">{subtitle}</p>
-        )}
+        {subtitle && <p className="mt-0.5 text-[11px] text-vault-text-dim">{subtitle}</p>}
       </div>
       {action}
     </div>
@@ -282,7 +303,9 @@ export function Card({
   return (
     <div
       className={`rounded-lg border border-vault-border bg-vault-surface/40 ${
-        hover ? 'hover:border-vault-border-bright hover:bg-vault-surface/70 cursor-pointer transition-all duration-200' : ''
+        hover
+          ? 'hover:border-vault-border-bright hover:bg-vault-surface/70 cursor-pointer transition-all duration-200'
+          : ''
       } ${onClick ? 'cursor-pointer' : ''} ${className}`}
       onClick={onClick}
     >

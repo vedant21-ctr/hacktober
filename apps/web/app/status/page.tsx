@@ -92,11 +92,10 @@ export default function SystemStatusPage() {
               {status?.ok ? '● ONLINE' : '○ OFFLINE'}
             </span>
           </div>
-          <div className="text-xl font-bold font-mono text-vault-text">
-            API Gateway
-          </div>
+          <div className="text-xl font-bold font-mono text-vault-text">API Gateway</div>
           <p className="text-xs text-vault-text-dim leading-relaxed">
-            Standard &amp; Polling Rate Limiters active. Contract version 1 enforced via Zod schema validation.
+            Standard &amp; Polling Rate Limiters active. Contract version 1 enforced via Zod schema
+            validation.
           </p>
         </div>
 
@@ -116,11 +115,10 @@ export default function SystemStatusPage() {
               {status?.db ? '● CONNECTED' : '○ DISCONNECTED'}
             </span>
           </div>
-          <div className="text-xl font-bold font-mono text-vault-text">
-            SQLite + FTS5
-          </div>
+          <div className="text-xl font-bold font-mono text-vault-text">SQLite + FTS5</div>
           <p className="text-xs text-vault-text-dim leading-relaxed">
-            Deterministic relational archive with full-text search index (FTS5) for rapid decision query retrieval.
+            Deterministic relational archive with full-text search index (FTS5) for rapid decision
+            query retrieval.
           </p>
         </div>
 
@@ -147,7 +145,8 @@ export default function SystemStatusPage() {
             Local Gemma 4 E4B via Ollama. Current operating mode:{' '}
             <strong className="text-vault-text uppercase font-mono">
               {status?.ollama.mode || 'replay'}
-            </strong>.
+            </strong>
+            .
           </p>
         </div>
       </div>
@@ -164,7 +163,9 @@ export default function SystemStatusPage() {
               <span>✓</span> Zero Cloud AI Dependencies
             </div>
             <p className="text-vault-text-dim font-sans leading-relaxed text-xs">
-              DecisionVault never transmits proprietary code, GitHub issues, or review comments to OpenAI, Anthropic, or external cloud LLM providers. All extraction runs locally on your machine.
+              DecisionVault never transmits proprietary code, GitHub issues, or review comments to
+              OpenAI, Anthropic, or external cloud LLM providers. All extraction runs locally on
+              your machine.
             </p>
           </div>
 
@@ -173,15 +174,24 @@ export default function SystemStatusPage() {
               <span>✓</span> No Vector Database Hallucinations
             </div>
             <p className="text-vault-text-dim font-sans leading-relaxed text-xs">
-              Unlike semantic search architectures that synthesize unverified claims, DecisionVault enforces a deterministic Evidence Lock: quotes must exist character-for-character in original Git history.
+              Unlike semantic search architectures that synthesize unverified claims, DecisionVault
+              enforces a deterministic Evidence Lock: quotes must exist character-for-character in
+              original Git history.
             </p>
           </div>
         </div>
 
         <div className="pt-2 flex flex-wrap items-center gap-4 text-[10px] font-mono text-vault-text-dim">
-          <span>Supported Model: <code className="text-vault-text">gemma4:e4b</code></span>
+          <span>
+            Supported Model: <code className="text-vault-text">gemma4:e4b</code>
+          </span>
           <span>•</span>
-          <span>Inference Rate: {status?.ollama.tokensPerSecLast ? `${status.ollama.tokensPerSecLast} tokens/sec` : 'Replay Speed'}</span>
+          <span>
+            Inference Rate:{' '}
+            {status?.ollama.tokensPerSecLast
+              ? `${status.ollama.tokensPerSecLast} tokens/sec`
+              : 'Replay Speed'}
+          </span>
           <span>•</span>
           <span>Live Repositories: {repos.length} Ingested</span>
         </div>
