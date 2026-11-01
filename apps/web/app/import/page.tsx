@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Repository, Job, StatusResponse } from '@decisionvault/shared/api';
+import Link from 'next/link';
+import type {
+  Repository,
+  Job,
+  StatusResponse,
+  DemoStatusResponse,
+} from '@decisionvault/shared/api';
 
 export default function ImportPage() {
   const [target, setTarget] = useState('');
@@ -10,16 +16,21 @@ export default function ImportPage() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loadingRepos, setLoadingRepos] = useState(true);
 
+  // Demo Repository State
+  const [demoStatus, setDemoStatus] = useState<DemoStatusResponse | null>(null);
+  const [isDemoOperating, setIsDemoOperating] = useState(false);
+
   // Import Job State
   const [currentJob, setCurrentJob] = useState<Job | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Fetch status and repositories on mount
+  // Fetch status, repositories, and demo status on mount
   useEffect(() => {
     fetchStatus();
     fetchRepositories();
+    fetchDemoStatus();
   }, []);
 
   // Poll active job if one is running
@@ -84,6 +95,56 @@ export default function ImportPage() {
       console.error('Failed to load repositories:', err);
     } finally {
       setLoadingRepos(false);
+    }
+  }
+
+  async function fetchDemoStatus() {
+    try {
+      const res = await fetch('/api/demo/status');
+      if (res.ok) {
+        const data = await res.json();
+        setDemoStatus(data);
+      }
+    } catch {
+      // Backend offline or in mock
+    }
+  }
+
+  async function handleSeedDemo() {
+    setIsDemoOperating(true);
+    setFormError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetch('/api/demo/seed', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Failed to seed demo repository');
+      setSuccessMessage(
+        'Fictional demo repository acme-inc/payment-service successfully loaded into SQLite!',
+      );
+      await fetchDemoStatus();
+      await fetchRepositories();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsDemoOperating(false);
+    }
+  }
+
+  async function handleResetDemo() {
+    setIsDemoOperating(true);
+    setFormError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetch('/api/demo/reset', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Failed to reset demo repository');
+      setSuccessMessage('Fictional demo repository acme-inc/payment-service reset.');
+      await fetchDemoStatus();
+      await fetchRepositories();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsDemoOperating(false);
     }
   }
 
@@ -200,6 +261,81 @@ export default function ImportPage() {
               {statusInfo?.ollama?.model || 'gemma4:e4b'} ({statusInfo?.ollama?.mode || 'replay'})
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* Fictional Demo Repository Panel */}
+      <div className="rounded-lg border border-indigo-500/40 bg-gradient-to-r from-indigo-950/40 via-slate-900/60 to-purple-950/30 p-6 shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2.5 py-0.5 text-xs font-semibold text-indigo-300 mb-2">
+              <span>PRESENTATION DEMO</span>
+              <span className="text-slate-500">•</span>
+              <span>100% OFFLINE</span>
+            </div>
+            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <span>acme-inc/payment-service</span>
+              <span className="text-xs font-mono font-normal text-slate-400 px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
+                Fictional Payments Engine
+              </span>
+            </h2>
+            <p className="mt-1 text-xs text-slate-300 max-w-2xl leading-relaxed">
+              Curated architectural debates covering PostgreSQL vs MongoDB, Asynchronous payment
+              queues, Mandatory Idempotency Keys, PCI-DSS raw card data prohibition, and Jittered
+              Retries. Pre-wired for instant offline evaluation without GitHub API rate limits or
+              tokens.
+            </p>
+          </div>
+
+          <div className="shrink-0 flex items-center gap-2">
+            {demoStatus?.seeded ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                Seeded ({demoStatus.decisionsCount} Decisions)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+                Not Loaded
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-3">
+          {!demoStatus?.seeded ? (
+            <button
+              onClick={handleSeedDemo}
+              disabled={isDemoOperating}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition shadow-sm disabled:opacity-50"
+            >
+              {isDemoOperating ? 'Seeding Demo Data...' : '⚡ Load Demo Repository'}
+            </button>
+          ) : (
+            <>
+              <Link
+                href="/decisions"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition shadow-sm"
+              >
+                <span>Explore Recovered Decisions</span>
+                <span>→</span>
+              </Link>
+              <Link
+                href="/prior-art"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition"
+              >
+                <span>Test Prior Art Conflict Scenario</span>
+                <span>⚠️</span>
+              </Link>
+              <button
+                onClick={handleResetDemo}
+                disabled={isDemoOperating}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs font-medium transition disabled:opacity-50 ml-auto"
+              >
+                <span>Reset Demo Data</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 

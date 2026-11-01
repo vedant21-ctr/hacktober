@@ -560,3 +560,30 @@ export const BenchmarkConfirmResponseSchema = z.object({
   reasonAccuracy: z.number().nullable(),
 });
 export type BenchmarkConfirmResponse = z.infer<typeof BenchmarkConfirmResponseSchema>;
+
+// DEMO REPOSITORY (acme-inc/payment-service)
+export const DemoStatusResponseSchema = z.object({
+  seeded: z.boolean(),
+  repoId: z.number().int().nullable(),
+  repoName: z.string(),
+  sourcesCount: z.number().int(),
+  decisionsCount: z.number().int(),
+});
+export type DemoStatusResponse = z.infer<typeof DemoStatusResponseSchema>;
+
+export const DemoSeedResponseSchema = z.object({
+  ok: z.boolean(),
+  repoId: z.number().int(),
+  repoName: z.string(),
+  sourcesCount: z.number().int(),
+  decisionsCount: z.number().int(),
+  message: z.string(),
+});
+export type DemoSeedResponse = z.infer<typeof DemoSeedResponseSchema>;
+
+export const DemoResetResponseSchema = z.object({
+  ok: z.boolean(),
+  deleted: z.boolean(),
+  message: z.string(),
+});
+export type DemoResetResponse = z.infer<typeof DemoResetResponseSchema>;

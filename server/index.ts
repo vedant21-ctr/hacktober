@@ -13,6 +13,7 @@ import { timelineService, TimelineService } from './timeline/service.js';
 import { relationshipsService, RelationshipsService } from './relationships/service.js';
 import { radarService, RadarService } from './health/service.js';
 import { benchmarkService, BenchmarkService } from './benchmark/service.js';
+import { demoService, DemoService } from './demo/service.js';
 import { jobManager } from './jobs.js';
 import {
   standardRateLimiter,
@@ -35,6 +36,9 @@ import {
   DecisionDetailSchema,
   DecisionsQuerySchema,
   DecisionsResponseSchema,
+  DemoResetResponseSchema,
+  DemoSeedResponseSchema,
+  DemoStatusResponseSchema,
   ExtractRequestSchema,
   ImportRequestSchema,
   JobSchema,
@@ -1627,6 +1631,54 @@ app.post('/api/benchmark/runs/:id/confirm', standardRateLimiter, (req: Request, 
   }
 });
 
+// GET /api/demo/status
+app.get('/api/demo/status', standardRateLimiter, (_req: Request, res: Response) => {
+  try {
+    const status = demoService.getDemoStatus();
+    const validated = DemoStatusResponseSchema.parse(status);
+    return res.json(validated);
+  } catch (err) {
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: err instanceof Error ? err.message : 'Failed to retrieve demo status',
+      },
+    });
+  }
+});
+
+// POST /api/demo/seed
+app.post('/api/demo/seed', standardRateLimiter, (_req: Request, res: Response) => {
+  try {
+    const result = demoService.seedDemoRepository();
+    const validated = DemoSeedResponseSchema.parse(result);
+    return res.json(validated);
+  } catch (err) {
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: err instanceof Error ? err.message : 'Failed to seed demo repository',
+      },
+    });
+  }
+});
+
+// POST /api/demo/reset
+app.post('/api/demo/reset', standardRateLimiter, (_req: Request, res: Response) => {
+  try {
+    const result = demoService.resetDemoRepository();
+    const validated = DemoResetResponseSchema.parse(result);
+    return res.json(validated);
+  } catch (err) {
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: err instanceof Error ? err.message : 'Failed to reset demo repository',
+      },
+    });
+  }
+});
+
 // Fallback 404 handler with standard error shape
 app.use((_req: Request, res: Response) => {
   res.status(404).json({
@@ -1661,6 +1713,7 @@ export { timelineService, TimelineService } from './timeline/service.js';
 export { relationshipsService, RelationshipsService } from './relationships/service.js';
 export { radarService, RadarService } from './health/service.js';
 export { benchmarkService, BenchmarkService } from './benchmark/service.js';
+export { demoService, DemoService } from './demo/service.js';
 export { PassAService } from './extract/passA.js';
 export { PassBService } from './extract/passB.js';
 export { verifyQuote, calculateDecisionConfidence } from './verify/evidenceLock.js';
