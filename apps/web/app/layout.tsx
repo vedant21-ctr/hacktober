@@ -24,6 +24,44 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         )}
         <Shell>{children}</Shell>
+        <header className="border-b border-slate-800 bg-slate-900/60 px-6 py-4 backdrop-blur">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-3">
+                <a
+                  href="/"
+                  className="font-mono text-xl font-bold tracking-tight text-emerald-400 hover:text-emerald-300"
+                >
+                  DecisionVault
+                </a>
+                <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-400 font-mono">
+                  v0.1.0-contracts
+                </span>
+              </div>
+              <nav className="hidden sm:flex items-center space-x-4 text-xs font-mono">
+                <a href="/" className="text-slate-400 hover:text-slate-200">
+                  Home
+                </a>
+                <a href="/import" className="text-slate-400 hover:text-emerald-400">
+                  Import
+                </a>
+                <a href="/decisions" className="text-slate-400 hover:text-emerald-400">
+                  Decisions
+                </a>
+                <a href="/prior-art" className="text-slate-400 hover:text-emerald-400">
+                  Prior Art
+                </a>
+              </nav>
+            </div>
+            <div className="text-xs text-slate-400 font-mono">
+              Problem Statement 06 • Hacktoberfest 2026
+            </div>
+          </div>
+        </header>
+        <main className="flex-1 max-w-7xl w-full mx-auto p-6">{children}</main>
+        <footer className="border-t border-slate-800/80 px-6 py-4 text-center text-xs text-slate-500">
+          DecisionVault • Team Glitch • Local Gemma 4 E4B inference runtime
+        </footer>
       </body>
     </html>
   );

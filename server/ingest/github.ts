@@ -596,6 +596,33 @@ export class GitHubIngestService {
           } catch (prErr) {
             console.error(`Warning: Failed to fetch PR review comments for ${externalId}:`, prErr);
           }
+
+          // Also fetch PR changed files with pagination
+          try {
+            let prFilesPage = 1;
+            while (prFilesPage <= 5) {
+              const prFilesResp = await this.fetchGitHubApi<
+                Array<{
+                  filename: string;
+                  previous_filename?: string;
+                  status: string;
+                  sha?: string;
+                }>
+              >(
+                `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${issue.number}/files?per_page=100&page=${prFilesPage}`,
+              );
+
+              if (!Array.isArray(prFilesResp.data) || prFilesResp.data.length === 0) {
+                break;
+              }
+              if (prFilesResp.data.length < 100) {
+                break;
+              }
+              prFilesPage++;
+            }
+          } catch (prFilesErr) {
+            console.error(`Warning: Failed to fetch PR files for ${externalId}:`, prFilesErr);
+          }
         }
 
         // Atomically write source and its comments to SQLite
