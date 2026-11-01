@@ -174,6 +174,7 @@ export const DecisionFileSchema = z.object({
   linkKind: z.enum(decisionFileLinkKindValues),
   basis: z.string(),
   commitSha: z.string().nullable().optional(),
+  evidenceId: z.number().int().nullable().optional(),
 });
 export type DecisionFile = z.infer<typeof DecisionFileSchema>;
 
@@ -240,6 +241,7 @@ export const DecisionsQuerySchema = z.object({
   status: z.enum(decisionStatusValues).optional(),
   lifecycle: z.enum(lifecycleValues).optional(),
   q: z.string().max(200, 'Search query must not exceed 200 characters').optional(),
+  filePath: z.string().max(260).optional(),
   page: z.coerce.number().int().positive().optional().default(1),
   pageSize: z.coerce
     .number()

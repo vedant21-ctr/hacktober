@@ -1,17 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import { app, GitHubIngestService, extractionLockManager } from '../server/index.js';
+import {
+  app,
+  GitHubIngestService,
+  extractionLockManager,
+  priorArtService,
+} from '../server/index.js';
 import { ExtractionService } from '../server/extract/service.js';
 import { initDatabase, getDatabase } from '../server/db/index.js';
 import { jobManager } from '../server/jobs.js';
 import { createRateLimiter } from '../server/middleware/rateLimit.js';
+import {
+  AskResponseSchema,
+  BenchmarkCasesResponseSchema,
+  BenchmarkConfirmResponseSchema,
+  BenchmarkRunSchema,
+  CodeTreeResponseSchema,
+  CodeWhyResponseSchema,
+  PriorArtReportSchema,
+  RadarResponseSchema,
+  RelationshipsResponseSchema,
+  TimelineResponseSchema,
+} from '@decisionvault/shared/api';
 
 describe('Express Server API', () => {
   beforeEach(() => {
     initDatabase(':memory:');
     jobManager.clear();
     extractionLockManager.clear();
+    priorArtService.clear();
 
     vi.spyOn(GitHubIngestService.prototype, 'ingestRepository').mockImplementation(async () => ({
       repoId: 1,
@@ -439,86 +457,365 @@ describe('Express Server API', () => {
     expect(res.body.confidenceParts).toEqual({ coverage: 1, statement: 1, reasonCoverage: 1 });
   });
 
-  it('POST /api/ask returns 501 with valid body', async () => {
+  it('POST /api/ask validates input, searches decisions, and returns grounded answer', async () => {
+    // Missing repoId or question -> 400
+    const badRes = await request(app).post('/api/ask').send({});
+    expect(badRes.status).toBe(400);
+    expect(badRes.body.error.code).toBe('VALIDATION_ERROR');
+
+    // Missing repoId -> 404
+    const notFoundRes = await request(app)
+      .post('/api/ask')
+      .send({ repoId: 99999, question: 'Why was cgi removed?' });
+    expect(notFoundRes.status).toBe(404);
+    expect(notFoundRes.body.error.code).toBe('NOT_FOUND');
+
+    // Seed repo, source, decision, evidence
+    const db = getDatabase();
+    db.prepare(
+      `INSERT INTO repositories (id, full_name, default_branch, head_commit_sha, imported_at)
+       VALUES (1, 'python/cpython', 'main', 'head', '2026-10-31T00:00:00Z')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO sources (id, repo_id, kind, external_id, url, title, state)
+       VALUES (1, 1, 'github_issue', 'cpython#594', 'https://github.com/python/cpython/issues/594', 'PEP 594: Removing dead batteries', 'closed')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO comments (id, source_id, external_id, idx, author, author_role, created_at, body, body_norm, url)
+       VALUES (1, 1, 'c1', 1, 'author', 'collaborator', '2026-10-31T00:00:00Z', 'The cgi module is obsolete and security-sensitive.', 'the cgi module is obsolete and security sensitive', 'https://github.com/python/cpython/issues/594#issuecomment-1')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO runs (id, kind, model, mode, prompt_version, params_json, started_at, status)
+       VALUES (1, 'extract_b', 'gemma4:e4b', 'replay', 'v1', '{}', '2026-10-31T00:00:00Z', 'succeeded')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO decisions (id, source_id, run_id, title, status, lifecycle, summary, confidence, confidence_parts, created_at)
+       VALUES (1, 1, 1, 'Deprecate cgi module', 'accepted', 'active', 'The cgi module is obsolete and security-sensitive so it should be removed.', 0.95, '{}', '2026-10-31T00:00:00Z')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO evidence (id, decision_id, comment_id, claim_type, quote, verified, verification_method, match_score, created_at)
+       VALUES (1, 1, 1, 'decision_statement', 'The cgi module is obsolete and security-sensitive.', 1, 'normalized_exact', 1.0, '2026-10-31T00:00:00Z')`,
+    ).run();
+
     const res = await request(app)
       .post('/api/ask')
       .send({ repoId: 1, question: 'Why was cgi removed?' });
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('answer');
+    expect(res.body).toHaveProperty('insufficientEvidence');
+    expect(res.body.insufficientEvidence).toBe(false);
+    expect(res.body.citations).toHaveLength(1);
+    expect(() => AskResponseSchema.parse(res.body)).not.toThrow();
+
+    // Query with no matches returns insufficientEvidence: true
+    const noMatchRes = await request(app)
+      .post('/api/ask')
+      .send({ repoId: 1, question: 'What is quantum teleportation physics?' });
+    expect(noMatchRes.status).toBe(200);
+    expect(noMatchRes.body.insufficientEvidence).toBe(true);
+    expect(() => AskResponseSchema.parse(noMatchRes.body)).not.toThrow();
   });
 
-  it('GET /api/code/tree returns 501', async () => {
+  it('GET /api/code/tree returns code tree nodes with decision count', async () => {
     const res = await request(app).get('/api/code/tree');
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('nodes');
+    expect(Array.isArray(res.body.nodes)).toBe(true);
+    expect(() => CodeTreeResponseSchema.parse(res.body)).not.toThrow();
+
+    // 404 for missing repository ID
+    const notFoundRes = await request(app).get('/api/code/tree?repoId=99999');
+    expect(notFoundRes.status).toBe(404);
+    expect(notFoundRes.body.error.code).toBe('NOT_FOUND');
   });
 
-  it('GET /api/code/why returns 501 with valid query', async () => {
+  it('GET /api/code/why validates query and returns decisions associated with a file path', async () => {
+    // Missing path returns 400
+    const badRes = await request(app).get('/api/code/why');
+    expect(badRes.status).toBe(400);
+    expect(badRes.body.error.code).toBe('VALIDATION_ERROR');
+
+    // Missing repo returns 404
+    const notFoundRepoRes = await request(app).get('/api/code/why?path=src/index.ts&repoId=99999');
+    expect(notFoundRepoRes.status).toBe(404);
+
+    // Valid path returns 200 with matching shape
     const res = await request(app).get('/api/code/why?path=Lib/cgi.py');
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('path', 'Lib/cgi.py');
+    expect(res.body).toHaveProperty('decisions');
+    expect(res.body).toHaveProperty('links');
+    expect(Array.isArray(res.body.decisions)).toBe(true);
+    expect(Array.isArray(res.body.links)).toBe(true);
+    expect(() => CodeWhyResponseSchema.parse(res.body)).not.toThrow();
   });
 
-  it('GET /api/radar returns 501', async () => {
+  it('GET /api/decisions filters correctly by filePath', async () => {
+    const db = getDatabase();
+    db.prepare(
+      `INSERT INTO repositories (id, full_name, default_branch, head_commit_sha, imported_at)
+       VALUES (1, 'acme/vault', 'main', 'head', '2026-10-31T00:00:00Z')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO sources (id, repo_id, kind, external_id, url, title, state)
+       VALUES (1, 1, 'github_issue', 'acme/vault#1', 'https://github.com/acme/vault/issues/1', 'Issue 1', 'open')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO runs (id, kind, model, mode, prompt_version, params_json, started_at, status)
+       VALUES (1, 'extract_b', 'gemma4:e4b', 'replay', 'v1', '{}', '2026-10-31T00:00:00Z', 'succeeded')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO decisions (id, source_id, run_id, title, status, lifecycle, summary, confidence, confidence_parts, created_at)
+       VALUES (1, 1, 1, 'Decision on Auth', 'accepted', 'active', 'Summary 1', 0.9, '{}', '2026-10-31T00:00:00Z')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO decision_files (decision_id, path, current_path, link_kind, basis)
+       VALUES (1, 'src/auth.ts', 'src/auth.ts', 'mentioned', 'Direct mention')`,
+    ).run();
+
+    const matchedRes = await request(app).get('/api/decisions?filePath=src/auth.ts');
+    expect(matchedRes.status).toBe(200);
+    expect(matchedRes.body.total).toBe(1);
+    expect(matchedRes.body.items[0].id).toBe(1);
+
+    const unmatchedRes = await request(app).get('/api/decisions?filePath=other/file.ts');
+    expect(unmatchedRes.status).toBe(200);
+    expect(unmatchedRes.body.total).toBe(0);
+  });
+
+  it('GET /api/decisions/:id/files retrieves file associations or returns 404 for missing decision', async () => {
+    const badRes = await request(app).get('/api/decisions/bad-id/files');
+    expect(badRes.status).toBe(400);
+
+    const missingRes = await request(app).get('/api/decisions/99999/files');
+    expect(missingRes.status).toBe(404);
+  });
+
+  it('POST /api/code/map validates request and triggers code mapping', async () => {
+    // Missing both repoId and decisionId returns 400
+    const badRes = await request(app).post('/api/code/map').send({});
+    expect(badRes.status).toBe(400);
+    expect(badRes.body.error.code).toBe('VALIDATION_ERROR');
+
+    // Missing repoId returns 404
+    const missingRepoRes = await request(app).post('/api/code/map').send({ repoId: 99999 });
+    expect(missingRepoRes.status).toBe(404);
+  });
+
+  it('GET /api/radar retrieves health radar items with optional filters', async () => {
+    // Missing repo returns 404
+    const notFoundRes = await request(app).get('/api/radar?repoId=99999');
+    expect(notFoundRes.status).toBe(404);
+
+    // Empty radar
     const res = await request(app).get('/api/radar');
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('items');
+    expect(() => RadarResponseSchema.parse(res.body)).not.toThrow();
   });
 
-  it('POST /api/radar/recheck returns 501 with valid body', async () => {
+  it('POST /api/radar/recheck triggers health recheck and returns updated radar', async () => {
+    // Missing repo returns 404
+    const notFoundRes = await request(app).post('/api/radar/recheck').send({ repoId: 99999 });
+    expect(notFoundRes.status).toBe(404);
+
+    // Valid recheck
     const res = await request(app).post('/api/radar/recheck').send({});
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(202);
+    expect(res.body).toHaveProperty('jobId');
   });
 
-  it('GET /api/timeline/:decisionId returns 501', async () => {
+  it('GET /api/timeline/:decisionId retrieves chronological events or 404', async () => {
+    const badIdRes = await request(app).get('/api/timeline/invalid');
+    expect(badIdRes.status).toBe(400);
+
+    const missingRes = await request(app).get('/api/timeline/99999');
+    expect(missingRes.status).toBe(404);
+
+    // Seed repo, source, decision
+    const db = getDatabase();
+    db.prepare(
+      `INSERT INTO repositories (id, full_name, default_branch, head_commit_sha, imported_at)
+       VALUES (1, 'acme/vault', 'main', 'head', '2026-10-31T00:00:00Z')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO sources (id, repo_id, kind, external_id, url, title, state)
+       VALUES (1, 1, 'github_issue', 'acme/vault#1', 'https://github.com/acme/vault/issues/1', 'Issue 1', 'open')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO runs (id, kind, model, mode, prompt_version, params_json, started_at, status)
+       VALUES (1, 'extract_b', 'gemma4:e4b', 'replay', 'v1', '{}', '2026-10-31T00:00:00Z', 'succeeded')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO decisions (id, source_id, run_id, title, status, lifecycle, summary, confidence, confidence_parts, created_at)
+       VALUES (1, 1, 1, 'Decision 1', 'accepted', 'active', 'Summary 1', 0.9, '{}', '2026-10-31T00:00:00Z')`,
+    ).run();
+
     const res = await request(app).get('/api/timeline/1');
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('events');
+    expect(() => TimelineResponseSchema.parse(res.body)).not.toThrow();
   });
 
-  it('GET /api/relationships returns 501 with valid query', async () => {
+  it('GET /api/relationships retrieves relationships for a decision or validates params', async () => {
+    const badRes = await request(app).get('/api/relationships');
+    expect(badRes.status).toBe(400);
+
+    const missingRes = await request(app).get('/api/relationships?decisionId=99999');
+    expect(missingRes.status).toBe(404);
+
+    // Seed repo, source, decision
+    const db = getDatabase();
+    db.prepare(
+      `INSERT INTO repositories (id, full_name, default_branch, head_commit_sha, imported_at)
+       VALUES (1, 'acme/vault', 'main', 'head', '2026-10-31T00:00:00Z')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO sources (id, repo_id, kind, external_id, url, title, state)
+       VALUES (1, 1, 'github_issue', 'acme/vault#1', 'https://github.com/acme/vault/issues/1', 'Issue 1', 'open')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO runs (id, kind, model, mode, prompt_version, params_json, started_at, status)
+       VALUES (1, 'extract_b', 'gemma4:e4b', 'replay', 'v1', '{}', '2026-10-31T00:00:00Z', 'succeeded')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO decisions (id, source_id, run_id, title, status, lifecycle, summary, confidence, confidence_parts, created_at)
+       VALUES (1, 1, 1, 'Decision 1', 'accepted', 'active', 'Summary 1', 0.9, '{}', '2026-10-31T00:00:00Z')`,
+    ).run();
+
     const res = await request(app).get('/api/relationships?decisionId=1');
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('items');
+    expect(() => RelationshipsResponseSchema.parse(res.body)).not.toThrow();
   });
 
-  it('POST /api/sandbox/prior-art returns 501 with valid body', async () => {
+  it('POST /api/sandbox/prior-art validates payload, checks repo existence, and accepts valid request', async () => {
+    // Bad payload
+    const badRes = await request(app).post('/api/sandbox/prior-art').send({});
+    expect(badRes.status).toBe(400);
+    expect(badRes.body.error.code).toBe('VALIDATION_ERROR');
+
+    // Missing repo returns 404
+    const notFoundRes = await request(app)
+      .post('/api/sandbox/prior-art')
+      .send({ repoId: 99999, input: { type: 'idea', value: 'Test idea' } });
+    expect(notFoundRes.status).toBe(404);
+    expect(notFoundRes.body.error.code).toBe('NOT_FOUND');
+
+    // Seed repo
+    const db = getDatabase();
+    db.prepare(
+      `INSERT INTO repositories (id, full_name, default_branch, head_commit_sha, imported_at)
+       VALUES (1, 'acme/vault', 'main', 'head', '2026-10-31T00:00:00Z')`,
+    ).run();
+
+    // Valid request returns 202 { jobId }
     const res = await request(app)
       .post('/api/sandbox/prior-art')
-      .send({ repoId: 1, input: { type: 'idea', value: 'Add type annotations' } });
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+      .send({ repoId: 1, input: { type: 'idea', value: 'Deprecate legacy auth' } });
+    expect(res.status).toBe(202);
+    expect(res.body).toHaveProperty('jobId');
   });
 
-  it('GET /api/sandbox/reports/:id returns 501', async () => {
-    const res = await request(app).get('/api/sandbox/reports/1');
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+  it('GET /api/sandbox/reports/:id validates id, returns 404 for missing report, and returns 200 with PriorArtReport', async () => {
+    const badIdRes = await request(app).get('/api/sandbox/reports/invalid');
+    expect(badIdRes.status).toBe(400);
+
+    const missingRes = await request(app).get('/api/sandbox/reports/99999');
+    expect(missingRes.status).toBe(404);
+
+    // Seed report into priorArtService
+    const mockReport = {
+      id: 104,
+      input: { type: 'idea', summary: 'Add OAuth' },
+      concepts: ['oauth', 'auth'],
+      changedPaths: ['src/oauth.ts'],
+      items: [],
+      note: 'Test report',
+    };
+    priorArtService.setReport(104, mockReport);
+
+    const res = await request(app).get('/api/sandbox/reports/104');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('id', 104);
+    expect(res.body).toHaveProperty('input');
+    expect(res.body).toHaveProperty('concepts');
+    expect(res.body).toHaveProperty('items');
+    expect(() => PriorArtReportSchema.parse(res.body)).not.toThrow();
   });
 
-  it('GET /api/benchmark/cases returns 501', async () => {
+  it('GET /api/benchmark/cases lists available benchmark cases', async () => {
     const res = await request(app).get('/api/benchmark/cases');
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('items');
+    expect(res.body.items.length).toBeGreaterThan(0);
+    expect(res.body.items[0]).toHaveProperty('id', 1);
+    expect(res.body.items[0]).toHaveProperty('pepNumber', 594);
+    expect(() => BenchmarkCasesResponseSchema.parse(res.body)).not.toThrow();
   });
 
-  it('POST /api/benchmark/run returns 501 with valid body', async () => {
+  it('POST /api/benchmark/run runs benchmark for a case and returns metrics', async () => {
+    const badRes = await request(app).post('/api/benchmark/run').send({});
+    expect(badRes.status).toBe(400);
+
+    const missingRes = await request(app).post('/api/benchmark/run').send({ caseId: 99999 });
+    expect(missingRes.status).toBe(404);
+
     const res = await request(app).post('/api/benchmark/run').send({ caseId: 1 });
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+    expect(res.status).toBe(202);
+    expect(res.body).toHaveProperty('jobId');
+    expect(res.body).toHaveProperty('benchmarkRunId');
   });
 
-  it('GET /api/benchmark/runs/:id returns 501', async () => {
-    const res = await request(app).get('/api/benchmark/runs/1');
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+  it('GET /api/benchmark/runs/:id retrieves run details or 404', async () => {
+    const badIdRes = await request(app).get('/api/benchmark/runs/invalid');
+    expect(badIdRes.status).toBe(400);
+
+    const missingRes = await request(app).get('/api/benchmark/runs/99999');
+    expect(missingRes.status).toBe(404);
+
+    // Create a run first
+    const runRes = await request(app).post('/api/benchmark/run').send({ caseId: 1 });
+    const runId = runRes.body.benchmarkRunId;
+
+    const res = await request(app).get(`/api/benchmark/runs/${runId}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('id', runId);
+    expect(() => BenchmarkRunSchema.parse(res.body)).not.toThrow();
   });
 
-  it('POST /api/benchmark/runs/:id/confirm returns 501 with valid body', async () => {
-    const res = await request(app).post('/api/benchmark/runs/1/confirm').send({ matches: [] });
-    expect(res.status).toBe(501);
-    expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
+  it('POST /api/benchmark/runs/:id/confirm records human review and recalculates metrics', async () => {
+    const badIdRes = await request(app)
+      .post('/api/benchmark/runs/invalid/confirm')
+      .send({ matches: [] });
+    expect(badIdRes.status).toBe(400);
+
+    const missingRes = await request(app)
+      .post('/api/benchmark/runs/99999/confirm')
+      .send({ matches: [] });
+    expect(missingRes.status).toBe(404);
+
+    // Run benchmark
+    const runRes = await request(app).post('/api/benchmark/run').send({ caseId: 1 });
+    const runId = runRes.body.benchmarkRunId;
+
+    // Confirm
+    const res = await request(app)
+      .post(`/api/benchmark/runs/${runId}/confirm`)
+      .send({
+        matches: [
+          {
+            goldId: 1,
+            alternativeId: 1,
+            confirmed: true,
+            reasonGrade: 1.0,
+          },
+        ],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('benchmarkRunId', runId);
+    expect(res.body).toHaveProperty('ok', true);
+    expect(() => BenchmarkConfirmResponseSchema.parse(res.body)).not.toThrow();
   });
 
   it('returns 404 for unhandled routes with standard error shape', async () => {
