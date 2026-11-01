@@ -46,6 +46,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <a href="/decisions" className="text-slate-400 hover:text-emerald-400">
                   Decisions
                 </a>
+                <a href="/prior-art" className="text-slate-400 hover:text-emerald-400">
+                  Prior Art
+                </a>
               </nav>
             </div>
             <div className="text-xs text-slate-400 font-mono">

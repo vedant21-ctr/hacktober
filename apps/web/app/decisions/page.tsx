@@ -11,6 +11,7 @@ export default function DecisionsPage() {
   const [selectedRepoId, setSelectedRepoId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filePathFilter, setFilePathFilter] = useState<string>('');
   const [selectedDecision, setSelectedDecision] = useState<DecisionDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export default function DecisionsPage() {
       if (selectedRepoId) params.append('repoId', selectedRepoId);
       if (statusFilter) params.append('status', statusFilter);
       if (searchQuery.trim()) params.append('q', searchQuery.trim());
+      if (filePathFilter.trim()) params.append('filePath', filePathFilter.trim());
 
       const res = await fetch(`/api/decisions?${params.toString()}`);
       if (res.ok) {
@@ -147,7 +149,7 @@ export default function DecisionsPage() {
 
       {/* Filter & Search Bar */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4 mb-6">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-5 gap-3">
           <div>
             <label className="block text-xs font-mono text-slate-400 mb-1">Repository</label>
             <select
@@ -176,6 +178,17 @@ export default function DecisionsPage() {
               <option value="rejected">Rejected</option>
               <option value="unresolved">Unresolved</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono text-slate-400 mb-1">File Path</label>
+            <input
+              type="text"
+              placeholder="e.g. src/auth.ts..."
+              value={filePathFilter}
+              onChange={(e) => setFilePathFilter(e.target.value)}
+              className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+            />
           </div>
 
           <div className="sm:col-span-2">
@@ -474,6 +487,65 @@ export default function DecisionsPage() {
                           </ul>
                         </div>
                       )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Associated Repository Files */}
+            {selectedDecision.files && selectedDecision.files.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 mb-2">
+                  Associated Repository Files ({selectedDecision.files.length})
+                </h3>
+                <div className="space-y-2">
+                  {selectedDecision.files.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded border border-slate-800 bg-slate-950 p-3 text-xs font-mono"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                              file.evidenceId !== null
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : file.linkKind === 'pr_diff'
+                                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                                  : file.linkKind === 'rename_tracked'
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                    : 'bg-slate-700/50 text-slate-300 border border-slate-600/50'
+                            }`}
+                          >
+                            {file.evidenceId !== null
+                              ? 'verified evidence'
+                              : file.linkKind === 'mentioned'
+                                ? 'mentioned (inferred)'
+                                : file.linkKind}
+                          </span>
+                          <span className="font-semibold text-slate-100">{file.path}</span>
+                          {file.currentPath && file.currentPath !== file.path && (
+                            <span className="text-slate-500 text-[11px]">
+                              → current: <span className="text-slate-300">{file.currentPath}</span>
+                            </span>
+                          )}
+                          {file.currentPath === null && (
+                            <span className="rounded bg-rose-500/10 px-1 py-0.5 text-[10px] text-rose-400">
+                              deleted / obsolete
+                            </span>
+                          )}
+                        </div>
+                        {file.commitSha && (
+                          <span className="text-slate-500 text-[10px]">
+                            commit:{' '}
+                            <span className="text-slate-300 font-mono">
+                              {file.commitSha.slice(0, 7)}
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-[11px] leading-relaxed">{file.basis}</p>
                     </div>
                   ))}
                 </div>
