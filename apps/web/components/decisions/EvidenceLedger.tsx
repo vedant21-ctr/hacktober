@@ -18,7 +18,7 @@ export function EvidenceLedger({
 }: EvidenceLedgerProps) {
   if (!evidenceList || evidenceList.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-800/80 bg-slate-900/20 p-6 text-center text-xs text-slate-500">
+      <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/40 p-6 text-center text-xs text-slate-500">
         {emptyMessage}
       </div>
     );
@@ -37,7 +37,7 @@ export function EvidenceLedger({
             </span>
           )}
         </div>
-        <span className="text-[11px] text-slate-500 font-mono">
+        <span className="text-xs text-slate-400">
           {isSampleData
             ? 'Sample contract quotes for demonstration'
             : 'Anchored in source discussion comments via Evidence Lock'}
@@ -48,7 +48,7 @@ export function EvidenceLedger({
         {evidenceList.map((item) => (
           <div
             key={item.id}
-            className="rounded-lg border border-slate-800 bg-slate-950/70 p-4 transition-colors hover:border-slate-700/80 space-y-3"
+            className="rounded-lg border border-slate-800/80 bg-[#080c14]/90 p-4 transition-colors hover:border-slate-700/80 space-y-3"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-wrap">
@@ -67,17 +67,17 @@ export function EvidenceLedger({
 
               <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
                 <span className="text-slate-300 font-medium">@{item.author}</span>
-                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 uppercase">
+                <span className="rounded bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-slate-400 uppercase">
                   {item.role}
                 </span>
-                <span className="text-slate-600">•</span>
+                <span className="text-slate-700">•</span>
                 <time dateTime={item.at} className="text-slate-400">
                   {formatDate(item.at)}
                 </time>
               </div>
             </div>
 
-            <blockquote className="border-l-2 border-emerald-500/60 pl-3.5 py-1 text-xs text-slate-200 font-mono bg-slate-900/30 rounded-r leading-relaxed italic">
+            <blockquote className="border-l-2 border-emerald-500/60 pl-3.5 py-1.5 text-xs text-slate-200 bg-[#0e1424]/60 rounded-r leading-relaxed italic">
               &ldquo;{item.quote}&rdquo;
             </blockquote>
 
@@ -86,7 +86,7 @@ export function EvidenceLedger({
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-mono"
+                className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
               >
                 Inspect Original Comment
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

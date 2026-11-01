@@ -13,15 +13,15 @@ This document provides a transparent, auditable compliance checklist mapped agai
 
 ## 1. Problem Statement 06 Alignment
 
-| Problem Statement 06 Requirement | Implementation in DecisionVault | Alignment Status |
-| :--- | :--- | :--- |
-| **Analyze public discussions, issues, and PRs** | Multi-source ingestion architecture supporting GitHub REST API, Discourse JSON endpoints (`discuss.python.org`), and offline JSON discussion dumps. | ✅ **Compliant** (Schema & contracts complete; live adapter in Phase 2) |
-| **Extract engineering decisions and reasoning** | Two-pass Gemma extraction pipeline: Pass A classifies comments (`proposal`, `objection`, etc.); Pass B synthesizes structured decisions. | ✅ **Compliant** (Prompts and schemas frozen in `shared/gemma.ts`) |
-| **Identify accepted and rejected alternatives** | Normalized `alternatives` relational table capturing `chosen`, `rejected`, and `open` outcomes with `reason_category` categorization. | ✅ **Compliant** (Implemented in SQLite schema and API contracts) |
-| **Maintain references to original discussions** | **Evidence Lock:** Quotes verified against source text with substring offsets (`normalized_exact`) or Levenshtein matching (`fuzzy`). | ✅ **Compliant** (Deterministic design, unit tests passing) |
-| **Link decisions to source code** | Deterministic hierarchy (`mentioned`, `pr_diff`, `rename_tracked`) mapping decisions to files and tracking Git renames to HEAD. | ✅ **Compliant** (Schema tables `decision_files` and `code/tree` API) |
-| **Surface warnings on PRs modifying code** | **Prior Art Reports** and **Proposal Sandbox** classify proposals as `conflicts`, `related`, or `irrelevant`. | ✅ **Compliant** (Contract schemas frozen, fixtures verified) |
-| **Evaluate against historical PEP discussions** | Blind Recovery Benchmark comparing extracted rejected alternatives against curated PEP gold cases. | ✅ **Compliant** (Benchmark schema, metrics, and gold formats established) |
+| Problem Statement 06 Requirement                | Implementation in DecisionVault                                                                                                                     | Alignment Status                                                           |
+| :---------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------- |
+| **Analyze public discussions, issues, and PRs** | Multi-source ingestion architecture supporting GitHub REST API, Discourse JSON endpoints (`discuss.python.org`), and offline JSON discussion dumps. | ✅ **Compliant** (Schema & contracts complete; live adapter in Phase 2)    |
+| **Extract engineering decisions and reasoning** | Two-pass Gemma extraction pipeline: Pass A classifies comments (`proposal`, `objection`, etc.); Pass B synthesizes structured decisions.            | ✅ **Compliant** (Prompts and schemas frozen in `shared/gemma.ts`)         |
+| **Identify accepted and rejected alternatives** | Normalized `alternatives` relational table capturing `chosen`, `rejected`, and `open` outcomes with `reason_category` categorization.               | ✅ **Compliant** (Implemented in SQLite schema and API contracts)          |
+| **Maintain references to original discussions** | **Evidence Lock:** Quotes verified against source text with substring offsets (`normalized_exact`) or Levenshtein matching (`fuzzy`).               | ✅ **Compliant** (Deterministic design, unit tests passing)                |
+| **Link decisions to source code**               | Deterministic hierarchy (`mentioned`, `pr_diff`, `rename_tracked`) mapping decisions to files and tracking Git renames to HEAD.                     | ✅ **Compliant** (Schema tables `decision_files` and `code/tree` API)      |
+| **Surface warnings on PRs modifying code**      | **Prior Art Reports** and **Proposal Sandbox** classify proposals as `conflicts`, `related`, or `irrelevant`.                                       | ✅ **Compliant** (Contract schemas frozen, fixtures verified)              |
+| **Evaluate against historical PEP discussions** | Blind Recovery Benchmark comparing extracted rejected alternatives against curated PEP gold cases.                                                  | ✅ **Compliant** (Benchmark schema, metrics, and gold formats established) |
 
 ---
 
@@ -41,12 +41,12 @@ DecisionVault strictly honors the open-source model guidelines of the hackathon:
 
 ## 3. Local Gemma 4 E4B Runtime Verification
 
-| Runtime Criterion | Verification Details | Status |
-| :--- | :--- | :--- |
-| **Ollama Connectivity** | Backend `GET /api/status` queries `http://localhost:11434/api/tags` and reports reachable status. | ✅ **Operational** |
-| **Cache Key Determinism** | Cache keys are deterministic SHA-256 hashes of `(model + promptVersion + systemPrompt + userPrompt + schemaHash)`. | ✅ **Verified by Unit Tests** |
-| **Zero Network Replay Mode** | `server/llm/ollama.ts` supports `LLM_MODE=replay` for CI and offline execution; misses throw `ReplayMissError` without making network calls. | ✅ **Verified in CI** |
-| **Prompt Injection Defenses** | Comments are treated strictly as untrusted data; delimited system prompts instruct Gemma to ignore embedded instructions. | ✅ **Designed & Documented** |
+| Runtime Criterion             | Verification Details                                                                                                                         | Status                        |
+| :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------- |
+| **Ollama Connectivity**       | Backend `GET /api/status` queries `http://localhost:11434/api/tags` and reports reachable status.                                            | ✅ **Operational**            |
+| **Cache Key Determinism**     | Cache keys are deterministic SHA-256 hashes of `(model + promptVersion + systemPrompt + userPrompt + schemaHash)`.                           | ✅ **Verified by Unit Tests** |
+| **Zero Network Replay Mode**  | `server/llm/ollama.ts` supports `LLM_MODE=replay` for CI and offline execution; misses throw `ReplayMissError` without making network calls. | ✅ **Verified in CI**         |
+| **Prompt Injection Defenses** | Comments are treated strictly as untrusted data; delimited system prompts instruct Gemma to ignore embedded instructions.                    | ✅ **Designed & Documented**  |
 
 ---
 
@@ -110,14 +110,14 @@ Development adheres to a disciplined multi-developer workflow:
 
 ## 8. Live Demo Readiness
 
-| Readiness Item | Validation Procedure | Status |
-| :--- | :--- | :--- |
-| **Local Dev Server** | `npm run dev` starts both server (port 4000) and web (port 3000) concurrently. | ✅ **Ready** |
-| **API Status Check** | `curl -s http://localhost:4000/api/status` returns `{ ok: true, db: true }`. | ✅ **Ready** |
-| **Frontend UI Scaffold** | Browser navigation to `http://localhost:3000` loads styled dark-mode interface. | ✅ **Ready** |
-| **Mock Data Banner** | Setting `NEXT_PUBLIC_API_MODE=mock` activates the prominent mock data disclosure banner. | ✅ **Ready** |
-| **Demo Script** | `docs/DEMO.md` provides complete click-by-click instructions for judges. | ✅ **Ready** |
-| **Pitch Presentation** | `docs/PITCH.md` provides an 8-minute timed presentation with speaker notes. | ✅ **Ready** |
+| Readiness Item           | Validation Procedure                                                                     | Status       |
+| :----------------------- | :--------------------------------------------------------------------------------------- | :----------- |
+| **Local Dev Server**     | `npm run dev` starts both server (port 4000) and web (port 3000) concurrently.           | ✅ **Ready** |
+| **API Status Check**     | `curl -s http://localhost:4000/api/status` returns `{ ok: true, db: true }`.             | ✅ **Ready** |
+| **Frontend UI Scaffold** | Browser navigation to `http://localhost:3000` loads styled dark-mode interface.          | ✅ **Ready** |
+| **Mock Data Banner**     | Setting `NEXT_PUBLIC_API_MODE=mock` activates the prominent mock data disclosure banner. | ✅ **Ready** |
+| **Demo Script**          | `docs/DEMO.md` provides complete click-by-click instructions for judges.                 | ✅ **Ready** |
+| **Pitch Presentation**   | `docs/PITCH.md` provides an 8-minute timed presentation with speaker notes.              | ✅ **Ready** |
 
 ---
 

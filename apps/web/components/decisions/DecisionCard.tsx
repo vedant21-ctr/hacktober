@@ -16,7 +16,7 @@ export function DecisionCard({
   isSampleData = false,
 }: DecisionCardProps) {
   const confidenceColor =
-    decision.confidence >= 0.9
+    decision.confidence >= 0.85
       ? 'text-emerald-400'
       : decision.confidence >= 0.7
         ? 'text-amber-400'
@@ -24,7 +24,7 @@ export function DecisionCard({
 
   return (
     <div
-      className={`group rounded-lg border border-slate-800 bg-slate-900/40 p-5 hover:border-slate-700 hover:bg-slate-900/60 transition-all ${className}`}
+      className={`group rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-5 hover:border-slate-700 hover:bg-[#131b2e] transition-all duration-150 ${className}`}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -51,7 +51,7 @@ export function DecisionCard({
               {formatPercent(decision.confidence)}
             </span>
           </span>
-          <span className="text-slate-600">•</span>
+          <span className="text-slate-700">•</span>
           <span
             title={
               isSampleData
@@ -61,13 +61,15 @@ export function DecisionCard({
             className="text-slate-400"
           >
             Verified:{' '}
-            <span className="text-slate-200">{formatPercent(decision.verifiedRatio)}</span>
+            <span className="text-slate-200 font-semibold">
+              {formatPercent(decision.verifiedRatio)}
+            </span>
           </span>
         </div>
       </div>
 
-      <Link href={`/decisions/${decision.id}`} className="block">
-        <h3 className="text-base font-semibold text-slate-100 group-hover:text-emerald-300 transition-colors">
+      <Link href={`/decisions/${decision.id}`} className="block group/link">
+        <h3 className="text-sm sm:text-base font-semibold text-slate-100 group-hover/link:text-emerald-300 transition-colors">
           {decision.title}
         </h3>
         <p className="mt-1.5 text-xs text-slate-400 leading-relaxed line-clamp-2">
@@ -75,10 +77,10 @@ export function DecisionCard({
         </p>
       </Link>
 
-      <div className="mt-4 pt-3 border-t border-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 font-mono">
+      <div className="mt-4 pt-3 border-t border-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
         <div className="flex items-center gap-1.5 truncate max-w-md">
           <svg
-            className="w-3.5 h-3.5 text-slate-600 flex-shrink-0"
+            className="w-3.5 h-3.5 text-slate-500 flex-shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -86,7 +88,7 @@ export function DecisionCard({
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={1.75}
               d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
             />
           </svg>

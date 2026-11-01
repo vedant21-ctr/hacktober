@@ -114,7 +114,6 @@ export default function PriorArtPage() {
 
       const { jobId } = await res.json();
 
-      // Poll report endpoint until report is ready
       let attempts = 0;
       const maxAttempts = 15;
       while (attempts < maxAttempts) {
@@ -127,7 +126,6 @@ export default function PriorArtPage() {
           setReport(reportData);
           break;
         } else if (reportRes.status === 202) {
-          // Still running, continue polling
           continue;
         } else {
           const errData = await reportRes.json().catch(() => ({}));
@@ -168,7 +166,7 @@ export default function PriorArtPage() {
   function getRelationBadge(relation: string) {
     if (relation === 'conflicts') {
       return (
-        <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+        <span className="rounded-md px-2 py-0.5 text-xs font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-1.5">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-400"></span>
           CONFLICTS
         </span>
@@ -176,14 +174,14 @@ export default function PriorArtPage() {
     }
     if (relation === 'related') {
       return (
-        <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+        <span className="rounded-md px-2 py-0.5 text-xs font-medium bg-sky-500/15 text-sky-300 border border-sky-500/30 flex items-center gap-1.5">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-sky-400"></span>
           RELATED
         </span>
       );
     }
     return (
-      <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400">
+      <span className="rounded-md px-2 py-0.5 text-xs font-medium bg-slate-800 text-slate-400">
         {relation}
       </span>
     );
@@ -193,34 +191,34 @@ export default function PriorArtPage() {
   const relatedCount = report?.items.filter((i) => i.relation === 'related').length || 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Simulation Banner & Header */}
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-mono text-amber-300 mb-3">
-          <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          SIMULATED PR ANALYSIS — Grounded in recovered decisions &amp; verified evidence
+        <div className="inline-flex items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-300 mb-2 font-medium">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+          SIMULATED PR ANALYSIS — Grounded in recovered decisions
         </div>
-        <h1 className="text-xl font-bold text-slate-100 font-mono tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">
           Prior-Art Detection
         </h1>
-        <p className="mt-1 text-xs text-slate-400 max-w-3xl">
+        <p className="mt-1 text-xs text-slate-400 max-w-3xl leading-relaxed">
           Evaluate proposed code changes against historical consensus, deprecation decisions, and
           previously rejected alternatives before writing or merging code.
         </p>
       </div>
 
       {/* Input / Simulation Form */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-5">
+      <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-5">
         <form onSubmit={handleAnalyze} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-mono text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-400 mb-1.5">
                 Select Imported Repository
               </label>
               <select
                 value={selectedRepoId}
                 onChange={(e) => setSelectedRepoId(e.target.value)}
-                className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/80"
               >
                 {repositories.length === 0 ? (
                   <option value="">No repositories imported yet</option>
@@ -235,7 +233,7 @@ export default function PriorArtPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-400 mb-1.5">
                 Simulation Input Mode
               </label>
               <div className="flex gap-2">
@@ -244,10 +242,10 @@ export default function PriorArtPage() {
                     key={t}
                     type="button"
                     onClick={() => setInputType(t)}
-                    className={`flex-1 py-1.5 px-3 rounded text-xs font-mono font-semibold transition ${
+                    className={`flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-colors ${
                       inputType === t
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                        : 'bg-slate-800/60 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                     }`}
                   >
                     {t === 'pr' ? 'PR / Files' : t === 'diff' ? 'Git Diff' : 'Idea / Concept'}
@@ -261,20 +259,20 @@ export default function PriorArtPage() {
           {mappedFiles.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-mono text-slate-400">
+                <span className="text-xs text-slate-400">
                   Quick Select Mapped Files in this Repository:
                 </span>
-                <span className="text-[10px] font-mono text-slate-500">
+                <span className="text-[11px] font-mono text-slate-500">
                   {mappedFiles.length} mapped files available
                 </span>
               </div>
-              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 rounded border border-slate-800 bg-slate-950/60">
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 rounded-md border border-slate-800 bg-slate-950/60">
                 {mappedFiles.slice(0, 16).map((node) => (
                   <button
                     key={node.path}
                     type="button"
                     onClick={() => handleSelectMappedFile(node.path)}
-                    className="rounded bg-slate-800/80 hover:bg-slate-700 px-2 py-0.5 text-[10px] font-mono text-slate-300 hover:text-emerald-300 transition"
+                    className="rounded bg-slate-800/80 hover:bg-slate-700 px-2 py-0.5 text-[11px] font-mono text-slate-300 hover:text-emerald-300 transition-colors"
                   >
                     {node.path} ({node.decisionCount})
                   </button>
@@ -284,7 +282,7 @@ export default function PriorArtPage() {
           )}
 
           <div>
-            <label className="block text-xs font-mono text-slate-400 mb-1">
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">
               {inputType === 'diff'
                 ? 'Paste Git Unified Diff'
                 : inputType === 'idea'
@@ -302,12 +300,12 @@ export default function PriorArtPage() {
                     ? 'Re-add cgi module to standard library for lightweight scripts'
                     : 'Refactor auth module:\nsrc/legacy_auth.py\nsrc/oauth.ts'
               }
-              className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-mono leading-relaxed"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500/80 font-mono leading-relaxed"
             />
           </div>
 
           {error && (
-            <div className="rounded border border-rose-500/30 bg-rose-500/10 p-2.5 text-xs text-rose-300 font-mono">
+            <div className="rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
               {error}
             </div>
           )}
@@ -316,7 +314,7 @@ export default function PriorArtPage() {
             <button
               type="submit"
               disabled={analyzing || !selectedRepoId}
-              className="rounded bg-emerald-600 px-5 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition disabled:opacity-50 font-mono flex items-center gap-2"
+              className="rounded-md bg-emerald-600 px-5 py-2 text-xs font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
             >
               {analyzing ? (
                 <>
@@ -335,38 +333,38 @@ export default function PriorArtPage() {
       {report && (
         <div className="space-y-6">
           {/* Summary Banner */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
               <div>
                 <span className="text-[10px] font-mono uppercase text-slate-500">
                   Simulation Summary
                 </span>
-                <h2 className="text-sm font-semibold text-slate-100 font-mono">
+                <h2 className="text-sm font-semibold text-slate-100 mt-0.5">
                   {report.input.summary}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
                 {conflictsCount > 0 ? (
-                  <span className="rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-1 text-xs font-mono font-bold">
+                  <span className="rounded-md bg-rose-500/15 text-rose-300 border border-rose-500/30 px-2.5 py-1 text-xs font-mono font-semibold">
                     {conflictsCount} Potential Conflict{conflictsCount > 1 ? 's' : ''}
                   </span>
                 ) : (
-                  <span className="rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 text-xs font-mono font-bold">
+                  <span className="rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 text-xs font-mono font-semibold">
                     0 Conflicts
                   </span>
                 )}
-                <span className="rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-1 text-xs font-mono font-bold">
+                <span className="rounded-md bg-sky-500/15 text-sky-300 border border-sky-500/30 px-2.5 py-1 text-xs font-mono font-semibold">
                   {relatedCount} Related Decision{relatedCount > 1 ? 's' : ''}
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono border-t border-slate-800/80 pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs border-t border-slate-800/80 pt-3">
               <div>
-                <span className="text-slate-500">
+                <span className="text-slate-400 font-medium">
                   Detected Changed Paths ({report.changedPaths.length}):
                 </span>
-                <div className="flex flex-wrap gap-1.5 mt-1">
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {report.changedPaths.length === 0 ? (
                     <span className="text-slate-500 italic">No specific file paths detected</span>
                   ) : (
@@ -375,10 +373,10 @@ export default function PriorArtPage() {
                       return (
                         <span
                           key={p}
-                          className={`rounded px-1.5 py-0.5 text-[11px] ${
+                          className={`rounded px-1.5 py-0.5 text-xs font-mono ${
                             isMapped
                               ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
-                              : 'bg-slate-800 text-slate-400'
+                              : 'bg-slate-800 text-slate-300'
                           }`}
                         >
                           {p} {isMapped ? '✓' : '(unmapped)'}
@@ -390,17 +388,17 @@ export default function PriorArtPage() {
               </div>
 
               <div>
-                <span className="text-slate-500">
+                <span className="text-slate-400 font-medium">
                   Detected Concepts ({report.concepts.length}):
                 </span>
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="flex flex-wrap gap-1 mt-1.5">
                   {report.concepts.length === 0 ? (
                     <span className="text-slate-500 italic">No specific concepts</span>
                   ) : (
                     report.concepts.map((c) => (
                       <span
                         key={c}
-                        className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300"
+                        className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] font-mono text-slate-300"
                       >
                         #{c}
                       </span>
@@ -410,16 +408,16 @@ export default function PriorArtPage() {
               </div>
             </div>
 
-            <p className="mt-3 text-xs text-slate-400 italic border-t border-slate-800/60 pt-2">
+            <p className="mt-3 text-xs text-slate-400 italic border-t border-slate-800/60 pt-2 leading-relaxed">
               {report.note}
             </p>
           </div>
 
           {/* Conflict Warning Notice */}
           {conflictsCount > 0 && (
-            <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-4 text-xs font-mono">
-              <div className="flex items-center gap-2 text-rose-300 font-bold mb-1">
-                <span className="text-base">⚠</span>
+            <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs">
+              <div className="flex items-center gap-2 text-rose-300 font-semibold mb-1">
+                <span>⚠</span>
                 Attention: Potential Historical Conflicts Detected ({conflictsCount})
               </div>
               <p className="text-rose-200/80 leading-relaxed">
@@ -432,22 +430,22 @@ export default function PriorArtPage() {
 
           {/* Matched Prior-Art Items */}
           {report.items.length === 0 ? (
-            <div className="rounded-lg border border-slate-800 bg-slate-900/20 p-8 text-center text-xs text-slate-400 font-mono">
+            <div className="rounded-lg border border-slate-800 bg-[#0e1424]/40 p-8 text-center text-xs text-slate-400">
               No historical decisions or rejected alternatives match the specified files.
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
                 Historical Decisions &amp; Prior-Art Evidence ({report.items.length})
               </div>
 
               {report.items.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`rounded-lg border p-4.5 transition ${
+                  className={`rounded-lg border p-5 transition-colors ${
                     item.relation === 'conflicts'
-                      ? 'border-rose-500/40 bg-slate-900/60'
-                      : 'border-slate-800 bg-slate-900/40'
+                      ? 'border-rose-500/30 bg-[#0e1424]/90'
+                      : 'border-slate-800 bg-[#0e1424]/75'
                   }`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3 mb-2.5">
@@ -457,31 +455,31 @@ export default function PriorArtPage() {
                         <button
                           type="button"
                           onClick={() => openDecisionDetail(item.decision.id)}
-                          className="text-sm font-bold text-slate-100 hover:text-emerald-400 font-mono text-left transition"
+                          className="text-sm font-semibold text-slate-100 hover:text-emerald-400 text-left transition-colors"
                         >
                           {item.decision.title}
                         </button>
                       </div>
-                      <p className="text-xs text-slate-400 font-mono mb-2">
+                      <p className="text-xs text-slate-400 leading-relaxed mb-2">
                         {item.decision.summary}
                       </p>
                     </div>
 
-                    <div className="text-right font-mono text-xs text-slate-500">
+                    <div className="text-right font-mono text-xs text-slate-400">
                       <div>Confidence: {Math.round(item.decision.confidence * 100)}%</div>
                       <div>Evidence Ratio: {Math.round(item.decision.verifiedRatio * 100)}%</div>
                     </div>
                   </div>
 
                   {/* Grounded Reason */}
-                  <div className="rounded border border-slate-800 bg-slate-950 p-2.5 text-xs font-mono mb-3">
+                  <div className="rounded-md border border-slate-800 bg-[#080c14]/80 p-3 text-xs mb-2.5">
                     <span className="font-semibold text-slate-300">Surfaced Reason:</span>{' '}
                     <span className="text-slate-400">{item.reason}</span>
                   </div>
 
                   {/* Prior Rejection Rationale */}
                   {item.rejectedBecause && (
-                    <div className="rounded border border-rose-500/30 bg-rose-500/5 p-2.5 text-xs font-mono mb-3">
+                    <div className="rounded-md border border-rose-500/25 bg-rose-500/5 p-3 text-xs mb-2.5">
                       <span className="font-semibold text-rose-300">
                         Previously Rejected Because:
                       </span>{' '}
@@ -491,7 +489,7 @@ export default function PriorArtPage() {
 
                   {/* Reconsideration Guidance */}
                   {item.reconsiderIf && (
-                    <div className="rounded border border-amber-500/30 bg-amber-500/5 p-2.5 text-xs font-mono mb-3">
+                    <div className="rounded-md border border-amber-500/25 bg-amber-500/5 p-3 text-xs mb-2.5">
                       <span className="font-semibold text-amber-300">Reconsider If:</span>{' '}
                       <span className="text-slate-300">{item.reconsiderIf}</span>
                     </div>
@@ -499,29 +497,29 @@ export default function PriorArtPage() {
 
                   {/* Grounded Verified Evidence Quotes */}
                   {item.evidence.length > 0 && (
-                    <div className="space-y-2 mt-3 pt-3 border-t border-slate-800">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
+                    <div className="space-y-2 mt-3 pt-3 border-t border-slate-800/80">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
                         Supporting Verified Evidence ({item.evidence.length})
                       </span>
                       {item.evidence.map((ev) => (
                         <div
                           key={ev.id}
-                          className="rounded border border-slate-800 bg-slate-950 p-2.5 text-xs font-mono"
+                          className="rounded-md border border-slate-800 bg-[#080c14]/80 p-3 text-xs space-y-1"
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-slate-400 text-[11px]">
-                              by {ev.author} ({ev.role}) • {ev.claimType}
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>
+                              by @{ev.author} ({ev.role}) • {ev.claimType}
                             </span>
                             <a
                               href={ev.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-[10px] text-slate-500 hover:text-emerald-400"
+                              className="text-slate-400 hover:text-emerald-400 transition-colors"
                             >
                               GitHub Source ↗
                             </a>
                           </div>
-                          <blockquote className="italic text-slate-300 border-l-2 border-slate-700 pl-2 my-1 text-[11px]">
+                          <blockquote className="italic text-slate-300 border-l-2 border-slate-700 pl-2.5 my-1 text-xs">
                             &ldquo;{ev.quote}&rdquo;
                           </blockquote>
                         </div>
@@ -530,13 +528,13 @@ export default function PriorArtPage() {
                   )}
 
                   {/* Source Discussion Reference */}
-                  <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-slate-500 border-t border-slate-800/60 pt-2">
-                    <span>Source: {item.decision.sourceTitle}</span>
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/60 pt-2">
+                    <span className="truncate max-w-sm">Source: {item.decision.sourceTitle}</span>
                     <a
                       href={item.decision.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-emerald-400 hover:text-emerald-300"
+                      className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
                     >
                       Open Discussion ↗
                     </a>
@@ -551,44 +549,42 @@ export default function PriorArtPage() {
       {/* Decision Detail Modal */}
       {selectedDecision && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+          <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg border border-slate-700 bg-[#0e1424] p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
               <div>
-                <span className="text-[10px] font-mono uppercase text-slate-500">
+                <span className="text-xs font-mono text-slate-500">
                   Decision #{selectedDecision.id}
                 </span>
-                <h2 className="text-lg font-bold text-slate-100 font-mono">
-                  {selectedDecision.title}
-                </h2>
+                <h2 className="text-lg font-bold text-slate-100">{selectedDecision.title}</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedDecision(null)}
-                className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-300 font-mono mb-4 leading-relaxed">
+            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
               {selectedDecision.summary}
             </p>
 
             {/* Alternatives */}
             {selectedDecision.alternatives.length > 0 && (
               <div className="mb-4">
-                <h3 className="text-xs font-mono uppercase text-slate-400 mb-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 font-mono">
                   Considered Alternatives
                 </h3>
                 <div className="space-y-2">
                   {selectedDecision.alternatives.map((alt) => (
                     <div
                       key={alt.id}
-                      className="rounded border border-slate-800 bg-slate-950 p-3 text-xs font-mono"
+                      className="rounded-md border border-slate-800 bg-[#080c14]/80 p-3 text-xs space-y-1"
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span
-                          className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
                             alt.outcome === 'chosen'
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                               : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
@@ -601,7 +597,7 @@ export default function PriorArtPage() {
                       <p className="text-slate-400 mb-1">{alt.description}</p>
                       {alt.reason && (
                         <p className="text-slate-300">
-                          <span className="text-slate-500 font-semibold">Reason:</span> {alt.reason}
+                          <span className="text-slate-400 font-semibold">Reason:</span> {alt.reason}
                         </p>
                       )}
                     </div>
@@ -613,20 +609,20 @@ export default function PriorArtPage() {
             {/* Verified Quotes */}
             {selectedDecision.decisionEvidence.length > 0 && (
               <div>
-                <h3 className="text-xs font-mono uppercase text-slate-400 mb-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 font-mono">
                   Decision Evidence (Exact Quotes)
                 </h3>
                 <div className="space-y-2">
                   {selectedDecision.decisionEvidence.map((ev) => (
                     <div
                       key={ev.id}
-                      className="rounded border border-slate-800 bg-slate-950 p-2.5 text-xs font-mono"
+                      className="rounded-md border border-slate-800 bg-[#080c14]/80 p-2.5 text-xs"
                     >
                       <blockquote className="italic text-slate-300 border-l-2 border-slate-700 pl-2">
                         &ldquo;{ev.quote}&rdquo;
                       </blockquote>
-                      <div className="mt-1 text-[10px] text-slate-500">
-                        by {ev.author} ({ev.role})
+                      <div className="mt-1 text-[11px] text-slate-400 font-mono">
+                        by @{ev.author} ({ev.role})
                       </div>
                     </div>
                   ))}

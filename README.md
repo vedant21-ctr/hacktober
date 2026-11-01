@@ -43,7 +43,7 @@ Large-scale open-source and enterprise codebases evolve across thousands of issu
 When engineering decisions are not formalized or are lost in discussion archives, teams suffer from acute, compounding inefficiencies:
 
 - **Maintainer Burnout and Relitigation:** New contributors continually open proposals or pull requests advocating designs that maintainers debated and rejected years ago. Maintainers must repeatedly re-explain the same technical reasons.
-- **Lost Architectural Rationale:** Months or years after a design is implemented, original authors depart and new engineers cannot answer: *Why was this library selected? Why was this synchronous queue preferred over an event bus? Why was this specific constraint imposed?*
+- **Lost Architectural Rationale:** Months or years after a design is implemented, original authors depart and new engineers cannot answer: _Why was this library selected? Why was this synchronous queue preferred over an event bus? Why was this specific constraint imposed?_
 - **Accidental Regressions During Refactoring:** Developers modifying or modernizing code inadvertently eliminate safeguards or reintroduce architectural bottlenecks because the original constraint was documented only in an old closed issue.
 - **Wasted Contributor Effort:** Well-meaning developers spend days writing elaborate code for proposals that were destined for rejection due to unwritten operational or compatibility constraints.
 
@@ -103,8 +103,8 @@ To eliminate LLM hallucination and ensure auditability, DecisionVault implements
 
 - **Strict Verbatim Verification:** For every quote emitted by Gemma, the backend retrieves `comments.body_norm` for the cited thread comment:
   - **Method 1 (`normalized_exact`):** Substring match on normalized text with quote length $\ge 20$ characters. Yields `match_score = 1.0`.
-  - **Method 2 (`fuzzy` fallback):** Sliding-window Levenshtein similarity metric. Quotes with a score $\ge 0.90$ are accepted and flagged as *Approximate*.
-  - **Method 3 (`none` / Unverified):** Quotes scoring below 0.90 or referencing invalid comments are recorded as `verified = 0`. They remain visible in the UI with an *Unverified Claim* badge and receive zero weight in confidence scoring.
+  - **Method 2 (`fuzzy` fallback):** Sliding-window Levenshtein similarity metric. Quotes with a score $\ge 0.90$ are accepted and flagged as _Approximate_.
+  - **Method 3 (`none` / Unverified):** Quotes scoring below 0.90 or referencing invalid comments are recorded as `verified = 0`. They remain visible in the UI with an _Unverified Claim_ badge and receive zero weight in confidence scoring.
 - **Mathematical Confidence Scoring:** Decision confidence is computed algorithmically by the backend—never self-reported by the LLM:
   $$\text{Confidence} = 0.4 \times \text{Coverage} + 0.4 \times \text{AuthorRole} + 0.2 \times \text{ReasonCoverage}$$
   - $\text{Coverage}$: Ratio of verified evidence quotes over total claimed quotes (fuzzy weighted at 0.5, exact at 1.0).
@@ -132,37 +132,42 @@ Developers can navigate the repository tree in the **Code Map** or query the bac
 DecisionVault prevents teams from repeating historical missteps through two active feedback mechanisms:
 
 ### A. Prior Art Reports (Proposal Sandbox)
+
 Before writing code or opening a PR, developers input an idea description, pull request number, or diff:
+
 1. The backend extracts changed paths and key technical concepts.
 2. SQLite FTS5 retrieves matching historical decisions and verified evidence.
 3. Gemma evaluates the candidate set, categorizing each item as `conflicts`, `related`, or `irrelevant`.
 4. A structured **Prior Art Report** is generated, displaying prior rejections, verbatim maintenance quotes, and `reconsiderIf` guidance.
 
 ### B. Reopen Radar (Constraint Monitoring)
-Many alternatives are rejected due to temporary constraints (e.g., *"Cannot adopt dataclasses because we must support Python 2.7"*). The **Reopen Radar** continually monitors these constraints against HEAD:
+
+Many alternatives are rejected due to temporary constraints (e.g., _"Cannot adopt dataclasses because we must support Python 2.7"_). The **Reopen Radar** continually monitors these constraints against HEAD:
+
 - **Deterministic Probes:** Probes inspect `pyproject.toml` (`python_requires`), `package.json` (`node_engines`), dependency manifests (`dependency_present`), and CI workflows (`ci_python_matrix`).
 - **Health Signal:** If a historical blocking constraint has changed, the condition is flagged as `may_not_hold`.
-- **Maintainer Alert:** Maintainers receive an actionable notice: *"This historical rejection may deserve reconsideration because the original constraint appears to have changed."*
+- **Maintainer Alert:** Maintainers receive an actionable notice: _"This historical rejection may deserve reconsideration because the original constraint appears to have changed."_
 
 ---
 
 ## 9. Technology Stack & Local Gemma Runtime
 
-| Layer | Technology | Details |
-| :--- | :--- | :--- |
-| **Frontend** | Next.js 14+ (App Router), React, Tailwind CSS | Port 3000, dark-mode developer UI, responsive design |
-| **Backend API** | Node.js, Express, TypeScript, Zod | Port 4000, input-hardened REST API, strict schemas |
-| **Database & Search**| SQLite3 (`better-sqlite3`) + FTS5 | Full-text search with `porter unicode61` tokenizer and automated triggers |
-| **AI Inference** | Google Gemma 4 E4B (`gemma4:e4b`) | Executed locally via Ollama (`http://localhost:11434`), zero cloud transmission |
-| **Verification** | Deterministic Evidence Lock | Substring + sliding-window Levenshtein matching |
-| **Testing** | Vitest | Contract verification, schema validation, database integrity, replay tests |
-| **Assistance Disclosure**| Gemini 3.8 High / Argon | Used strictly as interactive pair-programming assistant during development |
+| Layer                     | Technology                                    | Details                                                                         |
+| :------------------------ | :-------------------------------------------- | :------------------------------------------------------------------------------ |
+| **Frontend**              | Next.js 14+ (App Router), React, Tailwind CSS | Port 3000, dark-mode developer UI, responsive design                            |
+| **Backend API**           | Node.js, Express, TypeScript, Zod             | Port 4000, input-hardened REST API, strict schemas                              |
+| **Database & Search**     | SQLite3 (`better-sqlite3`) + FTS5             | Full-text search with `porter unicode61` tokenizer and automated triggers       |
+| **AI Inference**          | Google Gemma 4 E4B (`gemma4:e4b`)             | Executed locally via Ollama (`http://localhost:11434`), zero cloud transmission |
+| **Verification**          | Deterministic Evidence Lock                   | Substring + sliding-window Levenshtein matching                                 |
+| **Testing**               | Vitest                                        | Contract verification, schema validation, database integrity, replay tests      |
+| **Assistance Disclosure** | Gemini 3.8 High / Argon                       | Used strictly as interactive pair-programming assistant during development      |
 
 ---
 
 ## 10. Installation & Execution Guide
 
 ### Prerequisites
+
 - **Node.js:** v20.x or higher (tested on Node v22 and v24)
 - **npm:** v10.x or higher
 - **Ollama:** (Required for live AI extraction in Phase 2; optional in Phase 1 replay mode)

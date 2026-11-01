@@ -27,26 +27,26 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<string, string> = {
-  default: 'bg-slate-800 text-slate-300 border-slate-700',
-  accepted: 'bg-emerald-950/70 text-emerald-300 border-emerald-700/60 font-semibold',
-  rejected: 'bg-rose-950/70 text-rose-300 border-rose-700/60 font-semibold',
-  unresolved: 'bg-amber-950/70 text-amber-300 border-amber-700/60 font-semibold',
-  active: 'bg-blue-950/50 text-blue-300 border-blue-700/50',
-  superseded: 'bg-slate-900 text-slate-400 border-slate-800 line-through',
-  holds: 'bg-emerald-950/70 text-emerald-300 border-emerald-700/60',
-  may_not_hold: 'bg-amber-950/70 text-amber-300 border-amber-600/70 font-semibold animate-pulse',
-  unknown: 'bg-slate-800 text-slate-400 border-slate-700',
-  verified: 'bg-emerald-900/50 text-emerald-300 border-emerald-600/60',
-  approximate: 'bg-amber-900/50 text-amber-300 border-amber-600/60',
-  unverified: 'bg-rose-950/50 text-rose-400 border-rose-800/60',
-  tech: 'bg-slate-900 text-cyan-300 border-cyan-800/40 font-mono',
+  default: 'bg-slate-800/60 text-slate-300 border-slate-700/60',
+  accepted: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 font-medium',
+  rejected: 'bg-rose-500/10 text-rose-300 border-rose-500/30 font-medium',
+  unresolved: 'bg-amber-500/10 text-amber-300 border-amber-500/30 font-medium',
+  active: 'bg-slate-800/80 text-slate-200 border-slate-700/80',
+  superseded: 'bg-slate-900/60 text-slate-500 border-slate-800 line-through',
+  holds: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+  may_not_hold: 'bg-amber-500/15 text-amber-300 border-amber-500/35 font-medium',
+  unknown: 'bg-slate-800/60 text-slate-400 border-slate-700/60',
+  verified: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+  approximate: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+  unverified: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+  tech: 'bg-slate-900/90 text-slate-300 border-slate-800 font-mono text-[11px]',
 };
 
 export function Badge({ children, variant = 'default', className = '' }: BadgeProps) {
   const style = variantStyles[variant] || variantStyles.default;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs border ${style} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border ${style} ${className}`}
     >
       {children}
     </span>

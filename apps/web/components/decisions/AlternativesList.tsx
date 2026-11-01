@@ -11,7 +11,7 @@ interface AlternativesListProps {
 export function AlternativesList({ alternatives, isSampleData = false }: AlternativesListProps) {
   if (!alternatives || alternatives.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-6 text-center text-xs text-slate-500">
+      <div className="rounded-lg border border-slate-800 bg-[#0e1424]/40 p-6 text-center text-xs text-slate-500">
         No alternatives recorded for this decision.
       </div>
     );
@@ -22,12 +22,12 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
   const open = alternatives.filter((a) => a.outcome === 'open');
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Chosen / Accepted Option */}
       {chosen.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -37,7 +37,7 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
                 />
               </svg>
             </span>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-emerald-300 font-mono">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-300 font-mono">
               Accepted Alternative
             </h4>
             {isSampleData && (
@@ -47,16 +47,16 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {chosen.map((alt) => (
               <div
                 key={alt.id}
-                className="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-5 space-y-4"
+                className="rounded-lg border border-emerald-500/25 bg-[#0e1424]/90 p-5 space-y-4"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <h5 className="text-base font-semibold text-emerald-100">{alt.name}</h5>
-                    <span className="rounded bg-emerald-900/40 border border-emerald-700/50 px-2 py-0.5 text-xs text-emerald-300 font-mono">
+                    <span className="rounded bg-emerald-950/60 border border-emerald-700/50 px-2 py-0.5 text-xs text-emerald-300 font-mono">
                       Outcome: Chosen
                     </span>
                   </div>
@@ -64,11 +64,11 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
                 </div>
 
                 {alt.reason && (
-                  <div className="rounded bg-slate-900/70 border border-slate-800 p-3.5">
+                  <div className="rounded bg-slate-900/60 border border-slate-800 p-3.5">
                     <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 block mb-1">
                       Selection Reasoning:
                     </span>
-                    <p className="text-xs text-slate-200">{alt.reason}</p>
+                    <p className="text-xs text-slate-200 leading-relaxed">{alt.reason}</p>
                   </div>
                 )}
 
@@ -89,9 +89,9 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
 
       {/* Rejected Alternatives */}
       {rejected.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500/20 text-rose-400">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500/15 text-rose-400">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -101,7 +101,7 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
                 />
               </svg>
             </span>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-rose-300 font-mono">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-rose-300 font-mono">
               Rejected Alternatives ({rejected.length})
             </h4>
             {isSampleData && (
@@ -111,11 +111,11 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {rejected.map((alt) => (
               <div
                 key={alt.id}
-                className="rounded-lg border border-rose-500/20 bg-slate-900/40 p-5 space-y-4 hover:border-rose-500/30 transition-colors"
+                className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-5 space-y-4 hover:border-slate-700 transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h5 className="text-base font-semibold text-slate-100">{alt.name}</h5>
@@ -123,7 +123,7 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
                     {alt.reasonCategory && (
                       <Badge variant="tech">Category: {alt.reasonCategory}</Badge>
                     )}
-                    <span className="rounded bg-rose-950/60 border border-rose-800/60 px-2 py-0.5 text-xs text-rose-300 font-mono">
+                    <span className="rounded bg-rose-950/50 border border-rose-800/50 px-2 py-0.5 text-xs text-rose-300 font-mono">
                       Outcome: Rejected
                     </span>
                   </div>
@@ -132,7 +132,7 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
                 <p className="text-xs text-slate-400 leading-relaxed">{alt.description}</p>
 
                 {alt.reason && (
-                  <div className="rounded bg-rose-950/20 border border-rose-900/40 p-3.5">
+                  <div className="rounded bg-rose-950/20 border border-rose-900/35 p-3.5">
                     <span className="text-[11px] font-mono uppercase tracking-wider text-rose-400 block mb-1">
                       Why it was rejected:
                     </span>
@@ -158,7 +158,7 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
                           </div>
 
                           {cond.health?.state === 'may_not_hold' && (
-                            <div className="rounded bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-amber-200 space-y-1">
+                            <div className="rounded bg-amber-500/10 border border-amber-500/25 p-3 text-xs text-amber-200 space-y-1">
                               <p className="font-semibold text-amber-300">⚠ Reopen Radar Notice:</p>
                               <p className="text-[11px] leading-relaxed">
                                 This historical rejection may deserve reconsideration because the
@@ -200,17 +200,17 @@ export function AlternativesList({ alternatives, isSampleData = false }: Alterna
         </div>
       )}
 
-      {/* Open Alternatives if any */}
+      {/* Open Alternatives */}
       {open.length > 0 && (
-        <div className="space-y-4">
-          <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-400 font-mono">
+        <div className="space-y-3">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
             Open Alternatives ({open.length})
           </h4>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {open.map((alt) => (
               <div
                 key={alt.id}
-                className="rounded-lg border border-slate-800 bg-slate-900/30 p-4 space-y-2"
+                className="rounded-lg border border-slate-800 bg-[#0e1424]/50 p-4 space-y-1.5"
               >
                 <h5 className="text-sm font-semibold text-slate-200">{alt.name}</h5>
                 <p className="text-xs text-slate-400">{alt.description}</p>

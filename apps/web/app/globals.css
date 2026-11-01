@@ -2,22 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 :root {
-  --background: #090d16;
-  --foreground: #e2e8f0;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --background: #080c14;
+  --foreground: #f1f5f9;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b #080c14;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #080c14;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 2.5px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    sans-serif;
+  font-family: var(--font-sans);
+  letter-spacing: -0.011em;
+}
+
+/* Restrained evidence quote styling */
+.evidence-quote {
+  position: relative;
+  padding-left: 1rem;
+  border-left: 2px solid #10b981;
+}
+
+/* Status indicator animation */
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.status-pulse {
+  animation: statusPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* File tree indentation */
+.file-tree-item {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.file-tree-item::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #1e293b;
+}
+
+/* Timeline line */
+.timeline-line {
+  position: relative;
+}
+
+.timeline-line::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #1e293b;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(14, 20, 36, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom focus ring - restrained emerald */
+.focus-vault:focus {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #080c14,
+    0 0 0 4px rgba(16, 185, 129, 0.35);
+}
+
+/* Navigation active indicator */
+.nav-active {
+  position: relative;
+}
+
+.nav-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 60%;
+  background: #10b981;
+  border-radius: 1px;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }

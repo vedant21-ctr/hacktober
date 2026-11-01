@@ -7,9 +7,9 @@ interface TimelineTrailProps {
 }
 
 const eventTypeStyles: Record<string, { label: string; color: string; dot: string }> = {
-  proposed: { label: 'Proposed', color: 'text-blue-400', dot: 'bg-blue-400' },
+  proposed: { label: 'Proposed', color: 'text-sky-400', dot: 'bg-sky-400' },
   objected: { label: 'Objected', color: 'text-rose-400', dot: 'bg-rose-400' },
-  agreed: { label: 'Agreed', color: 'text-cyan-400', dot: 'bg-cyan-400' },
+  agreed: { label: 'Agreed', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   decided: { label: 'Decided', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   revised: { label: 'Revised', color: 'text-amber-400', dot: 'bg-amber-400' },
 };
@@ -17,7 +17,7 @@ const eventTypeStyles: Record<string, { label: string; color: string; dot: strin
 export function TimelineTrail({ events }: TimelineTrailProps) {
   if (!events || events.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/20 p-6 text-center text-xs text-slate-500">
+      <div className="rounded-lg border border-slate-800 bg-[#0e1424]/40 p-6 text-center text-xs text-slate-500">
         No chronological events recorded for this decision.
       </div>
     );
@@ -31,7 +31,7 @@ export function TimelineTrail({ events }: TimelineTrailProps) {
         Discussion Evolution &amp; Event Trail
       </h4>
 
-      <div className="relative border-l border-slate-800 ml-3 pl-6 space-y-6">
+      <div className="relative border-l border-slate-800 ml-3 pl-6 space-y-5">
         {sorted.map((ev, idx) => {
           const config = eventTypeStyles[ev.type] || {
             label: ev.type,
@@ -42,15 +42,13 @@ export function TimelineTrail({ events }: TimelineTrailProps) {
           return (
             <div key={idx} className="relative group">
               <span
-                className={`absolute -left-[31px] top-1 h-2.5 w-2.5 rounded-full ${config.dot} ring-4 ring-slate-950`}
+                className={`absolute -left-[30px] top-1.5 h-2 w-2 rounded-full ${config.dot} ring-4 ring-[#080c14]`}
               />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span
-                  className={`text-xs font-mono font-bold uppercase tracking-wider ${config.color}`}
-                >
+                <span className={`text-xs font-semibold uppercase tracking-wider ${config.color}`}>
                   {config.label}
                 </span>
-                <time dateTime={ev.at} className="text-[11px] text-slate-500 font-mono">
+                <time dateTime={ev.at} className="text-[11px] text-slate-400 font-mono">
                   {formatDate(ev.at)}
                 </time>
               </div>
@@ -61,7 +59,7 @@ export function TimelineTrail({ events }: TimelineTrailProps) {
                     href={ev.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-slate-400 hover:text-emerald-400 inline-flex items-center gap-1 font-mono transition-colors"
+                    className="text-xs text-slate-400 hover:text-emerald-400 inline-flex items-center gap-1 transition-colors"
                   >
                     View discussion thread comment →
                   </a>

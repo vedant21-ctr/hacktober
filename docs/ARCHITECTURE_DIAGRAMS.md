@@ -99,7 +99,7 @@ flowchart TD
         LoadBody["Load comments.body_norm"]
         NormQuote["normalizeText(quote)"]
         LengthCheck{"Length in<br/>[20, 400] chars?"}
-        
+
         ExactMatch{"Substring match in<br/>comments.body_norm?"}
         FuzzyMatch{"Sliding-window Levenshtein<br/>similarity >= 0.90?"}
     end

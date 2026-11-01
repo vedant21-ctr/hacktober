@@ -10,7 +10,7 @@ interface CodeConnectionsProps {
 export function CodeConnections({ files, isSampleData = false }: CodeConnectionsProps) {
   if (!files || files.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/20 p-6 text-center text-xs text-slate-500">
+      <div className="rounded-lg border border-slate-800 bg-[#0e1424]/40 p-6 text-center text-xs text-slate-500">
         No code files linked to this decision.
       </div>
     );
@@ -29,24 +29,24 @@ export function CodeConnections({ files, isSampleData = false }: CodeConnections
             </span>
           )}
         </div>
-        <span className="text-[11px] text-slate-500 font-mono">
+        <span className="text-xs text-slate-400">
           {isSampleData
             ? 'Sample linked paths for demonstration'
             : 'Deterministic path attribution with rename tracking'}
         </span>
       </div>
 
-      <div className="divide-y divide-slate-800/80 rounded-lg border border-slate-800 bg-slate-950/60 overflow-hidden">
+      <div className="divide-y divide-slate-800/70 rounded-lg border border-slate-800/80 bg-[#080c14]/90 overflow-hidden">
         {files.map((file, idx) => (
-          <div key={idx} className="p-4 space-y-2 hover:bg-slate-900/30 transition-colors">
+          <div key={idx} className="p-4 space-y-2 hover:bg-[#0e1424]/40 transition-colors">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-xs font-bold text-slate-200 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                <span className="font-mono text-xs font-semibold text-slate-200 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
                   {file.path}
                 </span>
 
                 {file.currentPath && file.currentPath !== file.path && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-mono text-cyan-400">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
@@ -60,7 +60,7 @@ export function CodeConnections({ files, isSampleData = false }: CodeConnections
                 )}
 
                 {file.currentPath === null && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400/80 bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-900/40">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400/90 bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-900/40">
                     Removed at HEAD
                   </span>
                 )}
@@ -71,7 +71,7 @@ export function CodeConnections({ files, isSampleData = false }: CodeConnections
                 {file.commitSha && (
                   <span
                     title={`Linked commit: ${file.commitSha}`}
-                    className="font-mono text-[10px] text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800"
+                    className="font-mono text-[11px] text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800"
                   >
                     sha: {file.commitSha.slice(0, 7)}
                   </span>
@@ -79,7 +79,7 @@ export function CodeConnections({ files, isSampleData = false }: CodeConnections
               </div>
             </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-300 leading-relaxed">
               <span className="text-[11px] font-mono uppercase text-slate-500 mr-1.5">Basis:</span>
               {file.basis}
             </p>

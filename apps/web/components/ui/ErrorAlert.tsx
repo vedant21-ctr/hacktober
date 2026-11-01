@@ -19,10 +19,10 @@ export function ErrorAlert({
 
   if (isNotImplemented) {
     return (
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-5 text-amber-200">
+      <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-5 text-amber-200">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 mt-0.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-amber-400 font-mono text-xs font-bold">
+            <span className="flex h-5 w-5 items-center justify-center rounded bg-amber-500/20 text-amber-400 font-mono text-[11px] font-bold">
               501
             </span>
           </div>
@@ -35,11 +35,11 @@ export function ErrorAlert({
                 'This backend route is part of Phase 2 implementation. The server returned HTTP 501 Not Implemented.'}
             </p>
             {onPreviewFixture && (
-              <div className="mt-4 flex items-center gap-3">
+              <div className="mt-3.5 flex items-center gap-3 flex-wrap">
                 <button
                   type="button"
                   onClick={onPreviewFixture}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/30 border border-amber-500/40 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-200 hover:bg-amber-500/30 border border-amber-500/35 transition-colors"
                 >
                   <svg
                     className="w-3.5 h-3.5"
@@ -74,11 +74,11 @@ export function ErrorAlert({
   }
 
   return (
-    <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-5 text-rose-200">
+    <div className="rounded-lg border border-rose-500/25 bg-rose-500/10 p-5 text-rose-200">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
           <svg
-            className="w-5 h-5 text-rose-400"
+            className="w-4 h-4 text-rose-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -93,13 +93,13 @@ export function ErrorAlert({
         </div>
         <div className="flex-1">
           <h4 className="text-sm font-semibold text-rose-300">{title || 'Request Failed'}</h4>
-          <p className="mt-1 text-xs text-rose-300/80">{errorMessage}</p>
+          <p className="mt-1 text-xs text-rose-300/80 leading-relaxed">{errorMessage}</p>
           {onRetry && (
             <div className="mt-3">
               <button
                 type="button"
                 onClick={onRetry}
-                className="inline-flex items-center gap-1.5 rounded-md bg-rose-600/30 px-3 py-1 text-xs font-medium text-rose-200 hover:bg-rose-600/40 border border-rose-500/40 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-md bg-rose-600/30 px-3 py-1 text-xs font-medium text-rose-200 hover:bg-rose-600/40 border border-rose-500/35 transition-colors"
               >
                 Retry Request
               </button>

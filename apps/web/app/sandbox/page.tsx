@@ -38,9 +38,7 @@ export default function SandboxPage() {
           value: inputValue.trim(),
         },
       };
-      // In Phase 1/2A, backend will return 501
       const res = await api.checkPriorArt(req);
-      // If 202 is returned, fetch the report
       const rep = await api.getPriorArtReport(res.jobId);
       setReport(rep);
     } catch (err) {
@@ -66,15 +64,15 @@ export default function SandboxPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-6 max-w-4xl">
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400 mb-3 font-mono">
-          Radar &amp; Decision Support
+        <div className="inline-flex items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 mb-2">
+          Decision Support Radar
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-100 sm:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-100">
           Prior-Decision Warning &amp; Sandbox
         </h1>
-        <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
           Test proposed engineering ideas, PRs, or git diffs against historical repository decisions
           before re-litigating settled debates or proposing previously rejected alternatives.
         </p>
@@ -82,8 +80,8 @@ export default function SandboxPage() {
 
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 mr-2">
+          <div className="flex items-center gap-2 border-b border-slate-800/80 pb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400 mr-2">
               Input Mode:
             </span>
             {(['idea', 'pr', 'diff'] as PriorArtInputType[]).map((type) => (
@@ -91,13 +89,13 @@ export default function SandboxPage() {
                 key={type}
                 type="button"
                 onClick={() => setInputType(type)}
-                className={`px-3 py-1 rounded text-xs font-mono font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   inputType === type
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                    : 'bg-slate-800/60 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                 }`}
               >
-                {type.toUpperCase()}
+                {type === 'idea' ? 'Idea' : type === 'pr' ? 'PR' : 'Diff'}
               </button>
             ))}
           </div>
@@ -105,7 +103,7 @@ export default function SandboxPage() {
           <div>
             <label
               htmlFor="proposal-input"
-              className="block text-xs font-semibold text-slate-200 uppercase font-mono tracking-wider mb-2"
+              className="block text-xs font-medium text-slate-200 mb-2"
             >
               {inputType === 'idea'
                 ? 'Proposal Description / Architectural Idea'
@@ -125,18 +123,18 @@ export default function SandboxPage() {
                     ? 'e.g. 10452 or https://github.com/python/cpython/pull/10452'
                     : 'diff --git a/Lib/cgi.py b/Lib/cgi.py...'
               }
-              className="w-full rounded-md border border-slate-700 bg-slate-950 p-3 text-xs text-slate-100 font-mono placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none leading-relaxed"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 p-3 text-xs text-slate-100 placeholder:text-slate-600 focus:border-emerald-500/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/40 leading-relaxed font-mono"
             />
           </div>
 
-          <div className="flex justify-between items-center pt-2">
-            <span className="text-[11px] text-slate-500 font-mono">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <span className="text-xs text-slate-500">
               Evaluated strictly for decision support. Code is never executed.
             </span>
             <button
               type="submit"
               disabled={submitting || !inputValue.trim()}
-              className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors shadow-sm"
             >
               {submitting && <Spinner size="sm" />}
               {submitting ? 'Analyzing History...' : 'Evaluate Against History'}
@@ -147,23 +145,23 @@ export default function SandboxPage() {
 
       {/* Prominent Sample Fixture Disclaimer Banner */}
       {isFixturePreview && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-5 font-mono text-xs text-amber-200 space-y-2">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 space-y-2">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-amber-300">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
-              SAMPLE CONTRACT FIXTURE (PREVIEW ONLY — NOT LIVE WARNING)
+            <div className="flex items-center gap-2 font-semibold uppercase tracking-wider text-amber-300 text-[11px]">
+              <span className="h-2 w-2 rounded-full bg-amber-400"></span>
+              Sample Contract Fixture (Preview Mode — Not Live Warning)
             </div>
             <button
               onClick={() => {
                 setReport(null);
                 setIsFixturePreview(false);
               }}
-              className="text-[11px] text-amber-300 hover:text-amber-100 underline"
+              className="text-[11px] text-amber-300 hover:text-amber-100 underline transition-colors"
             >
               Exit preview &amp; clear data
             </button>
           </div>
-          <p className="text-[11px] text-amber-200/90 leading-relaxed font-sans">
+          <p className="text-[11px] text-amber-200/80 leading-relaxed font-sans">
             The backend endpoint{' '}
             <code className="text-amber-300 font-mono">POST /api/sandbox/prior-art</code> returned{' '}
             <strong>HTTP 501 (Not Implemented)</strong>. The Prior Art Report and warning items
@@ -171,8 +169,7 @@ export default function SandboxPage() {
             <code className="text-amber-300 font-mono">
               shared/fixtures/api/prior_art_report.json
             </code>{' '}
-            to demonstrate how recovered historical decisions and reconsider-if conditions will
-            surface when Phase 2 sandbox evaluation is live.
+            to demonstrate how recovered historical decisions and reconsider-if conditions surface.
           </p>
         </div>
       )}
@@ -195,7 +192,7 @@ export default function SandboxPage() {
       {/* Report Display */}
       {report && (
         <div className="space-y-6 pt-2">
-          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-5 space-y-3">
+          <div className="rounded-lg border border-slate-800/80 bg-[#0e1424]/75 p-5 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
@@ -207,25 +204,23 @@ export default function SandboxPage() {
                   </span>
                 )}
               </div>
-              <span className="rounded bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-300">
+              <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300 font-medium">
                 Input: {report.input.type}
               </span>
             </div>
 
-            <p className="text-xs text-slate-300 font-mono italic bg-slate-950 p-2.5 rounded border border-slate-800/80">
+            <p className="text-xs text-slate-300 italic bg-[#080c14]/80 p-3 rounded-md border border-slate-800 leading-relaxed">
               &ldquo;{report.input.summary}&rdquo;
             </p>
 
             {/* Extracted Concepts */}
             {report.concepts.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap pt-1">
-                <span className="text-[11px] font-mono text-slate-500 uppercase">
-                  Extracted Concepts:
-                </span>
+                <span className="text-xs text-slate-400">Extracted Concepts:</span>
                 {report.concepts.map((concept, idx) => (
                   <span
                     key={idx}
-                    className="rounded bg-slate-800/80 px-2 py-0.5 text-xs text-slate-300 font-mono border border-slate-700/60"
+                    className="rounded bg-slate-800/80 px-2 py-0.5 text-xs text-slate-300 border border-slate-700/60 font-mono"
                   >
                     {concept}
                   </span>
@@ -255,10 +250,8 @@ export default function SandboxPage() {
           </div>
 
           {report.note && (
-            <div className="p-4 rounded border border-slate-800 bg-slate-900/20 text-xs text-slate-400 leading-relaxed font-mono">
-              <span className="text-slate-300 font-semibold uppercase block mb-1">
-                Advisory Note:
-              </span>
+            <div className="p-4 rounded-lg border border-slate-800 bg-[#0e1424]/40 text-xs text-slate-400 leading-relaxed">
+              <span className="text-slate-300 font-semibold block mb-1">Advisory Note:</span>
               {report.note}
             </div>
           )}

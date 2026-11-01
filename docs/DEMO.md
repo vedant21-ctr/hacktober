@@ -49,6 +49,7 @@ npm run dev
 ```
 
 The terminal will confirm:
+
 - `Backend server running on http://localhost:4000`
 - `Frontend web application ready at http://localhost:3000`
 
@@ -61,6 +62,7 @@ curl -s http://localhost:4000/api/status | jq .
 ```
 
 Expected response structure:
+
 ```json
 {
   "ok": true,
@@ -83,7 +85,7 @@ Expected response structure:
 
 ### Step 3.1: Repository Import Workflow
 
-*Goal:* Demonstrate how DecisionVault ingests historical discussions without overwhelming developer machine resources.
+_Goal:_ Demonstrate how DecisionVault ingests historical discussions without overwhelming developer machine resources.
 
 1. **Navigate to the Application:** Open `http://localhost:3000` in your web browser.
 2. **Access the Import Screen:** In the navigation menu, select **Import**.
@@ -104,7 +106,7 @@ Expected response structure:
 
 ### Step 3.2: Inspecting a Recovered Decision
 
-*Goal:* Walk through a fully recovered architectural decision and demonstrate that it captures structure, rationale, and lifecycle.
+_Goal:_ Walk through a fully recovered architectural decision and demonstrate that it captures structure, rationale, and lifecycle.
 
 1. **Access the Decision Explorer:** Navigate to the **Explorer** tab (`/decisions`).
 2. **Select a Decision:** Select the canonical recovered decision:  
@@ -121,19 +123,19 @@ Expected response structure:
 
 ### Step 3.3: Accepted vs. Rejected Alternatives
 
-*Goal:* Demonstrate how DecisionVault preserves *rejected* designs and documents *why* they were declined.
+_Goal:_ Demonstrate how DecisionVault preserves _rejected_ designs and documents _why_ they were declined.
 
 1. **Focus on the Alternatives Table:** Scroll to the **Evaluated Alternatives** section of the decision detail view.
 2. **Compare the Outcomes:**
    - **Alternative 1 (Chosen):**  
-     *Title:* *"Zero-copy Ring Buffer with Deferred Callback Execution"*  
-     *Outcome:* `Chosen` (Green chip).  
-     *Reason:* High throughput under heavy concurrent load without allocating micro-buffers per packet.
+     _Title:_ _"Zero-copy Ring Buffer with Deferred Callback Execution"_  
+     _Outcome:_ `Chosen` (Green chip).  
+     _Reason:_ High throughput under heavy concurrent load without allocating micro-buffers per packet.
    - **Alternative 2 (Rejected):**  
-     *Title:* *"Worker Thread Threadpool with Synchronous Mutex Locking"*  
-     *Outcome:* `Rejected` (Red chip).  
-     *Reason Category:* `Performance` / `Complexity`.  
-     *Documented Reason:* Mutex contention under thread saturation introduced 18ms latency spikes in benchmark profiling.
+     _Title:_ _"Worker Thread Threadpool with Synchronous Mutex Locking"_  
+     _Outcome:_ `Rejected` (Red chip).  
+     _Reason Category:_ `Performance` / `Complexity`.  
+     _Documented Reason:_ Mutex contention under thread saturation introduced 18ms latency spikes in benchmark profiling.
 3. **Explain Value to Evaluators:**
    - When a new contributor submits a pull request proposing a threadpool-based mutex solution, maintainers do not need to re-benchmark or re-debate. DecisionVault preserves the historical rationale with mathematical certainty.
 
@@ -141,7 +143,7 @@ Expected response structure:
 
 ### Step 3.4: Demonstrating the Evidence Lock (Verbatim Verification)
 
-*Goal:* Prove that claims are anchored in verbatim source comments and cannot be hallucinated.
+_Goal:_ Prove that claims are anchored in verbatim source comments and cannot be hallucinated.
 
 1. **Examine the Evidence Ledger:** Under each alternative and decision statement, inspect the **Evidence Ledger**.
 2. **Show the Verification Badges:**
@@ -160,7 +162,7 @@ Expected response structure:
 
 ### Step 3.5: Demonstrating Decision-to-Code Connections & Rename Tracking
 
-*Goal:* Show how decisions follow code through Git history, even across file moves.
+_Goal:_ Show how decisions follow code through Git history, even across file moves.
 
 1. **Inspect Linked Files:** In the Decision Detail view, locate the **Associated Source Files** panel.
 2. **Highlight the File Connection:**
@@ -175,13 +177,14 @@ Expected response structure:
 
 ### Step 3.6: Demonstrating Prior-Decision Warnings (Prior Art & Reopen Radar)
 
-*Goal:* Show how DecisionVault actively alerts developers before they make mistakes.
+_Goal:_ Show how DecisionVault actively alerts developers before they make mistakes.
 
 #### A. Prior Art Sandbox (`/sandbox`)
+
 1. **Navigate to the Proposal Sandbox.**
 2. **Submit a Simulated Proposal:**
    - Input Tab: **Idea Proposal**
-   - Proposal Text: *"We should replace our async loop callbacks with a dedicated worker threadpool and mutex locks to simplify multi-core CPU distribution."*
+   - Proposal Text: _"We should replace our async loop callbacks with a dedicated worker threadpool and mutex locks to simplify multi-core CPU distribution."_
 3. **Review the Generated Prior Art Report:**
    - **Classification:** `Conflicts` (Red alert).
    - **Matched Historical Decision:** Decouple Async I/O Event Loop.
@@ -189,14 +192,15 @@ Expected response structure:
    - **Warning Advice:** Recommends reviewing previous benchmarks before committing development hours.
 
 #### B. Reopen Radar (`/radar`)
+
 1. **Navigate to Reopen Radar.**
 2. **Show an Active Reconsideration Signal:**
-   - Condition: *"Must support legacy Python 2.7 runtime."*
+   - Condition: _"Must support legacy Python 2.7 runtime."_
    - Probe: `python_requires`
    - Inspected File: `pyproject.toml`
    - Signal Value: `>= 3.10`
    - Health State: `may_not_hold` (Amber status).
-   - Maintainer Notice: *"This historical rejection may deserve reconsideration because the original constraint appears to have changed."*
+   - Maintainer Notice: _"This historical rejection may deserve reconsideration because the original constraint appears to have changed."_
 
 ---
 
@@ -204,16 +208,16 @@ Expected response structure:
 
 To ensure total transparency during evaluation, here is the exact breakdown between what is verified in the repository today versus upcoming pipeline integration:
 
-| Component | Status in Repository | Demo Mode Execution |
-| :--- | :--- | :--- |
-| **Data Contracts & Types** | **Complete (Frozen v1)** | Stored in `shared/`, validated by Zod |
-| **SQLite Schema & FTS5** | **Complete (Frozen)** | Full schema and sync triggers in `server/db/schema.sql` |
-| **API Contract Fixtures** | **Complete** | Realistic JSON payloads in `shared/fixtures/api/` |
-| **Express Backend** | **Operational Scaffold** | `GET /api/status` returns live DB/Ollama state; other routes return 501 |
-| **Web Frontend** | **Operational Scaffold** | Next.js App Router on port 3000 with API proxy rewrite |
-| **Ollama Client Interface**| **Complete** | Types, cache hashing, and replay modes in `server/llm/ollama.ts` |
-| **Live Extraction Pipeline**| **Phase 2 Scope** | Ingestion, chunking, and two-pass inference currently in development |
-| **Offline Demonstration** | **Fully Operational** | Runs via mock mode fixtures and replay test suite |
+| Component                    | Status in Repository     | Demo Mode Execution                                                     |
+| :--------------------------- | :----------------------- | :---------------------------------------------------------------------- |
+| **Data Contracts & Types**   | **Complete (Frozen v1)** | Stored in `shared/`, validated by Zod                                   |
+| **SQLite Schema & FTS5**     | **Complete (Frozen)**    | Full schema and sync triggers in `server/db/schema.sql`                 |
+| **API Contract Fixtures**    | **Complete**             | Realistic JSON payloads in `shared/fixtures/api/`                       |
+| **Express Backend**          | **Operational Scaffold** | `GET /api/status` returns live DB/Ollama state; other routes return 501 |
+| **Web Frontend**             | **Operational Scaffold** | Next.js App Router on port 3000 with API proxy rewrite                  |
+| **Ollama Client Interface**  | **Complete**             | Types, cache hashing, and replay modes in `server/llm/ollama.ts`        |
+| **Live Extraction Pipeline** | **Phase 2 Scope**        | Ingestion, chunking, and two-pass inference currently in development    |
+| **Offline Demonstration**    | **Fully Operational**    | Runs via mock mode fixtures and replay test suite                       |
 
 ---
 
