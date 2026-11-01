@@ -18,7 +18,15 @@ export function getSchemaSql(): string {
 }
 
 export function initDatabase(dbPath?: string): DatabaseType {
-  const resolvedPath = dbPath || process.env.DB_PATH || ':memory:';
+  let resolvedPath = dbPath || process.env.DB_PATH;
+  if (!resolvedPath) {
+    resolvedPath =
+      process.env.NODE_ENV === 'test' || process.env.VITEST
+        ? ':memory:'
+        : path.resolve(__dirname, '../../decisionvault.db');
+  } else if (resolvedPath !== ':memory:' && !path.isAbsolute(resolvedPath)) {
+    resolvedPath = path.resolve(__dirname, '../../', resolvedPath);
+  }
 
   // Ensure parent directory exists if using a file path
   if (resolvedPath !== ':memory:') {

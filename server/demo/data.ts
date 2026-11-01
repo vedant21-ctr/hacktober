@@ -62,10 +62,21 @@ export interface DemoDecisionData {
   evidence: DemoEvidenceData[];
   files: DemoFileLinkData[];
   conditions?: Array<{
-    type: 'assumption' | 'runtime' | 'scale';
+    type:
+      | 'version'
+      | 'infrastructure'
+      | 'dependency'
+      | 'performance'
+      | 'security'
+      | 'maintenance'
+      | 'policy'
+      | 'other';
     statement: string;
     probe: 'none' | 'python_requires' | 'node_engines' | 'dependency_present' | 'ci_python_matrix';
     probeValue: string | null;
+    initialHealthState?: 'holds' | 'may_not_hold' | 'unknown';
+    healthDetails?: string;
+    interpretation?: string;
   }>;
 }
 
@@ -191,6 +202,18 @@ export const DEMO_REPOSITORY: DemoRepositoryData = {
             basis: 'Database pool connection configuration',
           },
         ],
+        conditions: [
+          {
+            type: 'performance',
+            statement:
+              'Transaction volume must remain under 10,000 writes/sec to maintain single-node ACID guarantees',
+            probe: 'none',
+            probeValue: null,
+            initialHealthState: 'holds',
+            healthDetails: 'Current write volume is well within single-node limits.',
+            interpretation: 'Condition holds: Relational ACID model remains valid.',
+          },
+        ],
       },
     },
     {
@@ -290,10 +313,26 @@ export const DEMO_REPOSITORY: DemoRepositoryData = {
         ],
         conditions: [
           {
-            type: 'runtime',
+            type: 'dependency',
             statement: 'Requires Redis connection for background message queue',
             probe: 'dependency_present',
             probeValue: 'ioredis',
+            initialHealthState: 'holds',
+            healthDetails:
+              'ioredis dependency is present in package.json and active in runtime configuration.',
+            interpretation: 'Condition holds: async queue dependency is satisfied.',
+          },
+          {
+            type: 'infrastructure',
+            statement:
+              'Queue throughput bounded by Redis single-thread event loop under 25k transactions/sec',
+            probe: 'node_engines',
+            probeValue: '>=18.0.0',
+            initialHealthState: 'may_not_hold',
+            healthDetails:
+              'Node engine updated to v20+ with cluster mode enabled in payment workers.',
+            interpretation:
+              'Constraint may no longer hold: higher concurrency architecture now available for reconsideration.',
           },
         ],
       },

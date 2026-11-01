@@ -1728,7 +1728,23 @@ export const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
 
 export function startServer(port: number = PORT) {
   // Ensure DB initialized before listening
-  initDatabase();
+  const db = initDatabase();
+
+  // Auto-seed demo repository if database is empty
+  try {
+    const repoCountRow = db.prepare('SELECT COUNT(*) as count FROM repositories').get() as
+      { count: number } | undefined;
+    if (!repoCountRow || repoCountRow.count === 0) {
+      console.log(
+        'Database empty: auto-seeding fictional demo repository (acme-inc/payment-service)...',
+      );
+      demoService.seedDemoRepository(db);
+      console.log('Demo repository seeded successfully.');
+    }
+  } catch (err) {
+    console.error('Failed to auto-seed demo repository:', err);
+  }
+
   return app.listen(port, () => {
     console.log(`DecisionVault server listening on port ${port}`);
   });

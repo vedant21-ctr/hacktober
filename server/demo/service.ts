@@ -253,29 +253,96 @@ export class DemoService {
               const condInsert = db
                 .prepare(
                   `INSERT INTO conditions (alternative_id, text, kind, probe, probe_value, last_checked_at)
-                   VALUES (?, ?, 'dependency', ?, ?, ?)`,
+                   VALUES (?, ?, ?, ?, ?, ?)`,
                 )
-                .run(firstAltId, cond.statement, cond.probe, cond.probeValue, dec.createdAt);
+                .run(
+                  firstAltId,
+                  cond.statement,
+                  cond.type,
+                  cond.probe,
+                  cond.probeValue,
+                  dec.createdAt,
+                );
 
+              const condId = Number(condInsert.lastInsertRowid);
+              const healthState = cond.initialHealthState || 'holds';
               db.prepare(
-                `INSERT INTO health (condition_id, state, checked_at) VALUES (?, 'holds', ?)`,
-              ).run(Number(condInsert.lastInsertRowid), dec.createdAt);
+                `INSERT INTO health (condition_id, state, details, interpretation, checked_at)
+                 VALUES (?, ?, ?, ?, ?)`,
+              ).run(
+                condId,
+                healthState,
+                cond.healthDetails || 'Constraint verified against repository manifests.',
+                cond.interpretation || 'Condition health actively tracked by Reopen Radar.',
+                dec.createdAt,
+              );
             }
           }
         }
+
+        // Insert Decision Events for timeline
+        for (let idx = 0; idx < sourceData.comments.length; idx++) {
+          const c = sourceData.comments[idx];
+          const commentInfo = commentIdMap.get(c.externalId);
+          if (!commentInfo) continue;
+          const commentId = commentInfo.id;
+
+          let eventType: 'proposed' | 'objected' | 'agreed' | 'decided' | 'revised' = 'decided';
+          if (idx === 0) {
+            eventType = 'proposed';
+          } else if (idx === 1) {
+            eventType = dec.status === 'accepted' ? 'objected' : 'revised';
+          } else if (idx === sourceData.comments.length - 1) {
+            eventType = 'decided';
+          } else {
+            eventType = 'agreed';
+          }
+
+          const evRow = db
+            .prepare('SELECT id FROM evidence WHERE decision_id = ? AND comment_id = ? LIMIT 1')
+            .get(decisionId, commentId) as { id: number } | undefined;
+
+          db.prepare(
+            `INSERT INTO decision_events (decision_id, comment_id, evidence_id, event_type, occurred_at, source_url)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+          ).run(decisionId, commentId, evRow?.id ?? null, eventType, c.createdAt, c.url);
+        }
       }
 
-      // 4. Insert Cross-Decision Relationships (e.g. Asynchronous Payment Processing relates to Idempotency Keys)
-      if (decisionIds.length >= 4) {
-        const evRow = db
+      // 4. Insert Cross-Decision Relationships
+      if (decisionIds.length >= 5) {
+        const evRow2 = db
           .prepare('SELECT id FROM evidence WHERE decision_id = ? LIMIT 1')
           .get(decisionIds[1]) as { id: number } | undefined;
+        const evRow3 = db
+          .prepare('SELECT id FROM evidence WHERE decision_id = ? LIMIT 1')
+          .get(decisionIds[2]) as { id: number } | undefined;
+        const evRow5 = db
+          .prepare('SELECT id FROM evidence WHERE decision_id = ? LIMIT 1')
+          .get(decisionIds[4]) as { id: number } | undefined;
 
-        if (evRow) {
+        if (evRow2) {
+          // Decision 2 (Queue Processing) supports Decision 4 (Retry with Jitter)
           db.prepare(
             `INSERT INTO decision_relationships (source_decision_id, target_decision_id, relationship_type, evidence_id, created_at)
              VALUES (?, ?, 'supports', ?, ?)`,
-          ).run(decisionIds[1], decisionIds[3], evRow.id, DEMO_REPOSITORY.importedAt);
+          ).run(decisionIds[1], decisionIds[3], evRow2.id, DEMO_REPOSITORY.importedAt);
+        }
+
+        if (evRow3) {
+          // Decision 3 (Idempotency Keys) supports Decision 2 (Queue Processing)
+          db.prepare(
+            `INSERT INTO decision_relationships (source_decision_id, target_decision_id, relationship_type, evidence_id, created_at)
+             VALUES (?, ?, 'supports', ?, ?)`,
+          ).run(decisionIds[2], decisionIds[1], evRow3.id, DEMO_REPOSITORY.importedAt);
+        }
+
+        if (evRow5) {
+          // Decision 5 (PCI-DSS Tokenization) supports Decision 1 (PostgreSQL Storage)
+          db.prepare(
+            `INSERT INTO decision_relationships (source_decision_id, target_decision_id, relationship_type, evidence_id, created_at)
+             VALUES (?, ?, 'supports', ?, ?)`,
+          ).run(decisionIds[4], decisionIds[0], evRow5.id, DEMO_REPOSITORY.importedAt);
         }
       }
 
@@ -326,6 +393,11 @@ export class DemoService {
 
       if (decIds.length > 0) {
         const placeholders = decIds.map(() => '?').join(',');
+
+        // 0. Delete decision_events
+        db.prepare(`DELETE FROM decision_events WHERE decision_id IN (${placeholders})`).run(
+          ...decIds,
+        );
 
         // 1. Delete relationships
         db.prepare(
