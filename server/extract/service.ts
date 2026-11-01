@@ -5,6 +5,7 @@ import { PassAService } from './passA.js';
 import { PassBService, type StoredDecision } from './passB.js';
 import { PROMPT_VERSION } from './prompts.js';
 import { jobManager } from '../jobs.js';
+import { codeMappingService } from '../link/service.js';
 
 export interface ExtractionServiceOptions {
   db?: DatabaseType;
@@ -239,6 +240,22 @@ export class ExtractionService {
             progress: { done: i + 1, total: targetSources.length },
           });
         }
+      }
+
+      // 5. Code Linking: Map recovered decisions to repository files
+      if (jobId) {
+        jobManager.updateJob(jobId, {
+          stage: 'link',
+          progress: { done: targetSources.length, total: targetSources.length },
+        });
+      }
+      try {
+        codeMappingService.mapDecisionsForSources(
+          targetSources.map((s) => s.id),
+          this.db,
+        );
+      } catch (linkErr) {
+        console.error('Warning: Code linking step failed during extraction:', linkErr);
       }
 
       // Mark run as succeeded

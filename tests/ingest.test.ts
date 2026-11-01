@@ -203,6 +203,25 @@ describe('GitHub Ingestion Service — Mocked Pipeline & Persistence', () => {
         );
       }
 
+      // PR #2 changed files
+      if (url.includes('/pulls/2/files')) {
+        return new Response(
+          JSON.stringify([
+            {
+              filename: 'tsconfig.json',
+              status: 'modified',
+              sha: 'abc1234',
+            },
+            {
+              filename: 'src/index.ts',
+              status: 'modified',
+              sha: 'def5678',
+            },
+          ]),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+
       return new Response('Not found', { status: 404 });
     }) as unknown as typeof fetch;
 
