@@ -1,62 +1,73 @@
 import type { Metadata } from 'next';
 import React from 'react';
 import './globals.css';
+import Sidebar from './components/Sidebar';
 
 export const metadata: Metadata = {
-  title: 'DecisionVault — Open Source Decision Intelligence',
+  title: 'DecisionVault — Recover the decisions nobody wrote down',
   description:
-    'Engineering knowledge recovery platform extracting technical decisions and verified evidence from open-source discussions.',
+    'Engineering memory and decision-recovery platform. Reconstructs undocumented technical decisions from GitHub issues, pull requests, review comments and historical code changes.',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: any }) {
   const isMockMode = process.env.NEXT_PUBLIC_API_MODE === 'mock';
 
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-slate-950 text-slate-100 antialiased flex flex-col">
+    <html lang="en" className="dark">
+      <head>
+        <meta name="color-scheme" content="dark" />
+      </head>
+      <body className="min-h-screen bg-vault-bg text-vault-text antialiased">
         {isMockMode && (
           <div
             data-testid="mock-data-banner"
-            className="w-full bg-amber-500 text-slate-950 px-4 py-1.5 text-center text-xs font-bold uppercase tracking-wider shadow-sm z-50"
+            className="w-full bg-amber-500 text-vault-bg px-4 py-1.5 text-center text-[10px] font-mono font-bold uppercase tracking-wider z-[60] relative"
           >
-            MOCK DATA — Offline Contract Fixture Mode Active
+            ⚠ MOCK DATA — Offline Contract Fixture Mode Active
           </div>
         )}
-        <header className="border-b border-slate-800 bg-slate-900/60 px-6 py-4 backdrop-blur">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3">
-                <a
-                  href="/"
-                  className="font-mono text-xl font-bold tracking-tight text-emerald-400 hover:text-emerald-300"
-                >
-                  DecisionVault
-                </a>
-                <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-400 font-mono">
-                  v0.1.0-contracts
-                </span>
+
+        <div className="flex h-screen overflow-hidden">
+          {/* Sidebar Navigation */}
+          <Sidebar />
+
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Top Bar */}
+            <header className="flex-shrink-0 border-b border-vault-border bg-vault-bg/80 backdrop-blur-sm px-6 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-mono text-vault-text-dim uppercase tracking-wider hidden sm:block">
+                    Engineering Decision Memory
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="rounded border border-vault-border bg-vault-surface px-2 py-0.5 text-[9px] font-mono text-vault-text-dim">
+                    v0.1.0
+                  </span>
+                  <span className="text-[10px] font-mono text-vault-text-dim hidden sm:block">
+                    PS-06 • Hacktoberfest 2026
+                  </span>
+                </div>
               </div>
-              <nav className="hidden sm:flex items-center space-x-4 text-xs font-mono">
-                <a href="/" className="text-slate-400 hover:text-slate-200">
-                  Home
-                </a>
-                <a href="/import" className="text-slate-400 hover:text-emerald-400">
-                  Import
-                </a>
-                <a href="/decisions" className="text-slate-400 hover:text-emerald-400">
-                  Decisions
-                </a>
-              </nav>
-            </div>
-            <div className="text-xs text-slate-400 font-mono">
-              Problem Statement 06 • Hacktoberfest 2026
-            </div>
+            </header>
+
+            {/* Page Content */}
+            <main className="flex-1 overflow-y-auto bg-technical-grid">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {children}
+              </div>
+            </main>
+
+            {/* Footer */}
+            <footer className="flex-shrink-0 border-t border-vault-border bg-vault-bg/80 px-6 py-2.5">
+              <div className="flex items-center justify-between text-[9px] font-mono text-vault-text-dim">
+                <span>DecisionVault • Team Glitch</span>
+                <span>Local Gemma 4 E4B (gemma4:e4b) • Ollama Runtime</span>
+              </div>
+            </footer>
           </div>
-        </header>
-        <main className="flex-1 max-w-7xl w-full mx-auto p-6">{children}</main>
-        <footer className="border-t border-slate-800/80 px-6 py-4 text-center text-xs text-slate-500">
-          DecisionVault • Team Glitch • Local Gemma 4 E4B inference runtime
-        </footer>
+        </div>
       </body>
     </html>
   );
