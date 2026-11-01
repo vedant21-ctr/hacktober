@@ -20,7 +20,7 @@ export function Shell({ children }: ShellProps) {
         selectedRepoId={selectedRepoId}
         onSelectRepo={setSelectedRepoId}
       />
-      <div className="flex flex-1 flex-col overflow-y-auto">
+      <div className="flex flex-1 flex-col overflow-y-auto min-w-0">
         <AppHeader
           onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
           selectedRepoId={selectedRepoId}

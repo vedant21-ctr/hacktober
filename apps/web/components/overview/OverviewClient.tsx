@@ -244,6 +244,127 @@ export function OverviewClient() {
               </div>
             </div>
           )}
+
+          {/* Meaningful Pipeline Guidance when Attention Queue is clear or 0 decisions */}
+          {data.counts.decisions === 0 && data.attention.length === 0 && (
+            <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-6 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200 font-mono flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+                    Decision Recovery Engine Ready
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-400">
+                    No engineering discussions have been ingested yet. Ingest a GitHub repository or
+                    preview frozen contract sample data.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => loadData(true)}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 font-mono transition-colors"
+                  >
+                    <span>Preview Contract Fixtures</span>
+                    <span className="text-amber-400">↗</span>
+                  </button>
+                  <Link
+                    href="/import"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors shadow-sm"
+                  >
+                    <span>Import Repository</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* 3-Step Pipeline Flow */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-md border border-slate-800/80 bg-slate-950/60 p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">
+                      1
+                    </span>
+                    <span className="font-semibold uppercase tracking-wider">GitHub Ingestion</span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Ingest issue threads, PRs, and review comments from public repositories into
+                    SQLite with FTS5 search.
+                  </p>
+                  <Link
+                    href="/import"
+                    className="inline-block text-[11px] font-mono text-emerald-400 hover:text-emerald-300"
+                  >
+                    Open Ingestion Pipeline →
+                  </Link>
+                </div>
+
+                <div className="rounded-md border border-slate-800/80 bg-slate-950/60 p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-mono text-cyan-400">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-[10px]">
+                      2
+                    </span>
+                    <span className="font-semibold uppercase tracking-wider">
+                      Local AI Extraction
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Local Gemma 4 E4B reconstructs undocumented decisions, extracts accepted vs.
+                    rejected alternatives, and locks verbatim evidence.
+                  </p>
+                  <Link
+                    href="/decisions"
+                    className="inline-block text-[11px] font-mono text-cyan-400 hover:text-cyan-300"
+                  >
+                    Explore Recovered Decisions →
+                  </Link>
+                </div>
+
+                <div className="rounded-md border border-slate-800/80 bg-slate-950/60 p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-mono text-amber-400">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-300 font-bold text-[10px]">
+                      3
+                    </span>
+                    <span className="font-semibold uppercase tracking-wider">
+                      Prior-Decision Warning
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Run the warning sandbox to test proposed changes against historical decisions
+                    before relitigating settled debates.
+                  </p>
+                  <Link
+                    href="/sandbox"
+                    className="inline-block text-[11px] font-mono text-amber-400 hover:text-amber-300"
+                  >
+                    Launch Warning Sandbox →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Attention Queue Clear card when database has decisions but attention queue is empty */}
+          {data.counts.decisions > 0 && data.attention.length === 0 && (
+            <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs">
+                  ✓
+                </span>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-200">Attention Queue Clear</h4>
+                  <p className="text-xs text-slate-400">
+                    All recovered decisions have verified evidence locks. Zero contested claims.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/decisions"
+                className="text-xs font-mono text-emerald-400 hover:text-emerald-300"
+              >
+                View All Decisions →
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </div>
