@@ -23,16 +23,16 @@
     "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "@eslint/js": "^9.14.0",
-    "@playwright/test": "^1.48.2",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@typescript-eslint/eslint-plugin": "^8.13.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.2",
     "@typescript-eslint/parser": "^8.13.0",
-    "concurrently": "^9.1.0",
-    "eslint": "^9.14.0",
-    "prettier": "^3.3.3",
+    "concurrently": "^10.0.7",
+    "eslint": "^10.14.0",
+    "prettier": "^3.10.0",
     "process": "^0.11.10",
-    "typescript": "^5.6.3"
+    "typescript": "^7.0.2"
   }
 }
